@@ -1,0 +1,54 @@
+#Protecter config file
+[[Protecters]]
+Name="appkey"
+AuthType="hired.TOMLAppKey"
+[Protecters.AuthConfig]
+# Static TOML appkey.
+# Example:https://github.com/herb-go/providers/blob/master/herb/statictoml/tomlappkey/example.toml 
+Source="appdata/appkey.static.toml"
+Example="system/exampledata/appkey.static.toml"
+[Protecters.Fields]
+"appid"="appidheader"
+"secret"="secretheader"
+
+[[Protecters]]
+Name="appkeysecret"
+AuthType="hired.TOMLAppKeySigner"
+[Protecters.AuthConfig]
+# Static TOML appkey.
+# Example:https://github.com/herb-go/providers/blob/master/herb/statictoml/tomlappkey/example.toml 
+Source="appdata/appkey.static.toml"
+Hash="md5"
+TimeOffsetMaxInSecond=7200
+[Protecters.AuthConfig.Fields]
+"timestamp"="timestamp"
+"appid"="appid"
+"secret"="secret"
+"object"="object"
+[Protecters.Fields]
+"timestamp"="timestampquery"
+"sign"="signquery"
+"appid"="appidquery"
+"object"="object"
+
+[[Protecters]]
+Name="webupload"
+AuthType="hired.TOMLAppKeySigner"
+[Protecters.AuthConfig]
+# Static TOML appkey.
+# Example:https://github.com/herb-go/providers/blob/master/herb/statictoml/tomlappkey/example.toml 
+Source="appdata/appkey.static.toml"
+Hash="md5"
+TimeOffsetMaxInSecond=7200
+[Protecters.AuthConfig.Fields]
+"timestamp"="timestamp"
+"appid"="appid"
+"secret"="secret"
+"object"="object"
+"bucket"="bucket"
+[Protecters.Fields]
+"timestamp"="timestampquery"
+"sign"="signquery"
+"appid"="appidquery"
+"object"="object"
+"bucket"="bucketquery"

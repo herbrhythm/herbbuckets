@@ -1,0 +1,9 @@
+#Sign config file
+AppidField="appid"
+TimestampField="timestamp"
+SecretField="secret"
+SignField="sign"
+ObjectField="object"
+PathField="path"
+BucketField="bucket"
+DefaultHasher="md5"

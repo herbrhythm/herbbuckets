@@ -1,0 +1,13 @@
+#Driver unique id driver name
+#"Driver"="snowflake"
+#"Driver"="simpleid"
+#"Driver"="uuid"
+"Driver"="simpleid"
+[Config]
+#Version uuid version.1 and 4 supported.
+#Default value is 1
+"Version"=1
+#snowflake node value
+"Node"=0
+#simple id suffix
+"Suff"=""

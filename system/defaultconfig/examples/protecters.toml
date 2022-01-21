@@ -1,0 +1,13 @@
+#Protecter config file
+# [[Protecters]]
+# Name="appkey"
+# AuthType="hired.TOMLAppKey"
+# [Protecters.AuthConfig]
+# # Static TOML appkey.
+# # Example:https://github.com/herb-go/herbmodule-drivers/blob/main/protecter-drivers/authenticator/tomlappkey/example.toml
+# Source="appdata/appkey.static.toml"
+# # Example toml
+# Example="system/exampledata/appkey.static.toml"
+# [Protecters.Fields]
+# "appid"="appidheader"
+# "secret"="secretheader"

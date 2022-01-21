@@ -1,0 +1,6 @@
+# [[Apps]]
+# ID="appid"
+# Owner="appowner"
+# Key="appkey"
+# [Apps.Payloads]
+# roles=""
