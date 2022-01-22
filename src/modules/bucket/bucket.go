@@ -3,6 +3,11 @@ package bucket
 import "io"
 
 type Fileinfo struct {
+	Size int64
+}
+
+func NewFileinfo() *Fileinfo {
+	return &Fileinfo{}
 }
 
 type Verifier struct {

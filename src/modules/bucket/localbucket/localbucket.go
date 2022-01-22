@@ -79,6 +79,9 @@ type LocalBucket struct {
 	Cors       *cors.CORS
 }
 
+func (b *LocalBucket) localpath(bucketname string, object string) string {
+	return filepath.Join(b.Location, bucketname, objectname)
+}
 func (b *LocalBucket) GrantDownloadURL(bucketname string, object string, opt *bucket.Options) (downloadurl string, err error) {
 	urlpath := path.Join(b.BasePath, bucketname, object)
 	p := urlencodesign.NewParams()
@@ -132,7 +135,7 @@ func (b *LocalBucket) Download(bucketname string, objectname string, w io.Writer
 	return err
 }
 func (b *LocalBucket) Upload(bucketname string, objectname string, r io.Reader) (err error) {
-	f, err := os.Open(filepath.Join(b.Location, bucketname, objectname))
+	f, err := os.Open(b.localpath(bucketname, objectname))
 	if err != nil {
 		return err
 	}
@@ -141,14 +144,23 @@ func (b *LocalBucket) Upload(bucketname string, objectname string, r io.Reader) 
 	return err
 }
 
-func (b *LocalBucket) GetFileinfo(bucketname string, path string) (info *bucket.Fileinfo, err error) {
-	return nil, nil
+func (b *LocalBucket) GetFileinfo(bucketname string, objectname string) (info *bucket.Fileinfo, err error) {
+	stat, err := os.Stat(b.localpath(bucketname, objectname))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, bucket.ErrNotFound
+		}
+		return nil, err
+	}
+	info = bucket.NewFileinfo()
+	info.Size = stat.Size()
+	return info, nil
 }
 func (b *LocalBucket) GetVerifier() *bucket.Verifier {
 	return Verifier
 }
-func (b *LocalBucket) RemoveFile(bucketname string, path string) error {
-	return nil
+func (b *LocalBucket) RemoveFile(bucketname string, objectname string) error {
+	return os.Remove(b.localpath(bucketname, objectname))
 }
 func (b *LocalBucket) ThirdpartyUpload() bool {
 	return false
