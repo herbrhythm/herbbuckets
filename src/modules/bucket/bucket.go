@@ -26,6 +26,7 @@ type Bucket interface {
 	RemoveFile(bucketname string, objectname string) error
 	Permanent() bool
 	ThirdpartyUpload() bool
+	ThirdpartyDownload() bool
 	GetVerifier() *Verifier
 	BucketType() string
 	Download(bucketname string, objectname string, w io.Writer) (err error)

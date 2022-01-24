@@ -80,7 +80,7 @@ type LocalBucket struct {
 }
 
 func (b *LocalBucket) localpath(bucketname string, object string) string {
-	return filepath.Join(b.Location, bucketname, objectname)
+	return filepath.Join(b.Location, bucketname, object)
 }
 func (b *LocalBucket) GrantDownloadURL(bucketname string, object string, opt *bucket.Options) (downloadurl string, err error) {
 	urlpath := path.Join(b.BasePath, bucketname, object)
@@ -163,6 +163,9 @@ func (b *LocalBucket) RemoveFile(bucketname string, objectname string) error {
 	return os.Remove(b.localpath(bucketname, objectname))
 }
 func (b *LocalBucket) ThirdpartyUpload() bool {
+	return false
+}
+func (b *LocalBucket) ThirdpartyDownload() bool {
 	return false
 }
 func (b *LocalBucket) BucketType() string {
