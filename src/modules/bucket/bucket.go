@@ -4,6 +4,7 @@ import (
 	"herbbuckets/modules/app"
 	"herbbuckets/modules/app/bucketconfig"
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/herb-go/herb-go/modules/cors"
@@ -73,8 +74,9 @@ type Engine interface {
 	ThirdpartyDownload() bool
 	GetVerifier() *Verifier
 	BucketType() string
-	Download(b *Bucket, objectname string, w io.Writer) (err error)
-	Upload(b *Bucket, objectname string, r io.Reader) (err error)
+	ServeHTTPDownload(w http.ResponseWriter, r *http.Request)
+	Download(b *Bucket, objectname string) (r io.ReadCloser, err error)
+	Upload(b *Bucket, objectname string) (w io.WriteCloser, err error)
 	GetFileinfo(b *Bucket, objectname string) (info *Fileinfo, err error)
 }
 

@@ -4,6 +4,7 @@ import (
 	"herbbuckets/modules/app"
 	"herbbuckets/modules/bucket"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -11,7 +12,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/herb-go/herb/file/simplehttpserver"
 	"github.com/herb-go/herb/middleware/cors"
+	"github.com/herb-go/herb/middleware/router/httprouter"
 	"github.com/herb-go/herbsecurity/secret"
 	"github.com/herb-go/herbsecurity/secret/hasher"
 	"github.com/herb-go/herbsecurity/secret/hasher/urlencodesign"
@@ -105,36 +108,32 @@ func (b *LocalBucket) GrantUploadURL(bu *bucket.Bucket, object string, opt *buck
 	q.Add(app.Sign.ObjectField, object)
 	return bu.BaseURL + UploadRouter + "?" + q.Encode(), nil
 }
-func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string, w io.Writer) (err error) {
+func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string) (r io.ReadCloser, err error) {
 	f, err := os.Open(filepath.Join(b.Location, bu.Name, objectname))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return bucket.ErrNotFound
+			return nil, bucket.ErrNotFound
 		}
 	}
-	defer f.Close()
-	_, err = io.Copy(w, f)
-	return err
+	return f, nil
 }
-func (b *LocalBucket) Upload(bu *bucket.Bucket, objectname string, r io.Reader) (err error) {
+func (b *LocalBucket) Upload(bu *bucket.Bucket, objectname string) (w io.WriteCloser, err error) {
 	lp := b.localpath(bu.Name, objectname)
 	folder := filepath.Dir(lp)
 	_, err = os.Stat(folder)
 	if err == nil {
-		return bucket.ErrExists
+		return nil, bucket.ErrExists
 	}
 	if !os.IsNotExist(err) {
-		return err
+		return nil, err
 	}
-	f, err := os.Open(lp)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = io.Copy(f, r)
-	return err
+	return os.Open(lp)
 }
-
+func (b *LocalBucket) ServeHTTPDownload(w http.ResponseWriter, r *http.Request) {
+	bu := bucket.GetBucketFromRequest(r)
+	objectname := httprouter.GetParams(r).Get(bucket.RouterParamObject)
+	simplehttpserver.ServeFile(filepath.Join(b.Location, bu.Name, objectname)).ServeHTTP(w, r)
+}
 func (b *LocalBucket) GetFileinfo(bu *bucket.Bucket, objectname string) (info *bucket.Fileinfo, err error) {
 	stat, err := os.Stat(b.localpath(bu.Name, objectname))
 	if err != nil {
