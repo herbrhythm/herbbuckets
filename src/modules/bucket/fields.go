@@ -5,6 +5,12 @@ import (
 	"net/http"
 )
 
+const BucketsFolder = "buckets"
+
+const PrefixDownload = "/download"
+
+const PrefixUpload = "/upload"
+
 const QueryFieldBucket = "bucket"
 const QueryFieldObject = "object"
 

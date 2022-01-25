@@ -23,12 +23,7 @@ import (
 
 const BucketType = "local"
 
-const BucketFolder = "buckets"
-
 const DefaultDataformat = "2006/01"
-
-const UploadRouter = "/upload/"
-const FileRouter = "/file/"
 
 const ExtentionsSeparator = ","
 
@@ -53,7 +48,7 @@ func (c *Config) ApplyTo(bu *bucket.Bucket, b *LocalBucket) error {
 	b.Cors = &c.Cors
 	b.Location = c.Location
 	if b.Location == "" {
-		b.Location = util.AppData(BucketFolder, bu.Name)
+		b.Location = util.AppData(bucket.BucketsFolder, bu.Name)
 	}
 	return nil
 }
@@ -83,7 +78,7 @@ func (b *LocalBucket) GrantDownloadURL(bu *bucket.Bucket, object string, opt *bu
 	q.Add(app.Sign.AppidField, opt.Appid)
 	q.Add(app.Sign.TimestampField, ts)
 	q.Add(app.Sign.SignField, s)
-	return path.Join(bu.BaseURL, bu.Name, object) + "?" + q.Encode(), nil
+	return path.Join(bu.BaseURL, bucket.PrefixDownload, bu.Name, object) + "?" + q.Encode(), nil
 }
 func (b *LocalBucket) Permanent() bool {
 	return b.Public
@@ -106,7 +101,7 @@ func (b *LocalBucket) GrantUploadURL(bu *bucket.Bucket, object string, opt *buck
 	q.Add(app.Sign.TimestampField, ts)
 	q.Add(app.Sign.BucketField, bu.Name)
 	q.Add(app.Sign.ObjectField, object)
-	return bu.BaseURL + UploadRouter + "?" + q.Encode(), nil
+	return path.Join(bu.BaseURL+bucket.PrefixUpload) + "?" + q.Encode(), nil
 }
 func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string) (r io.ReadCloser, err error) {
 	f, err := os.Open(filepath.Join(b.Location, bu.Name, objectname))
