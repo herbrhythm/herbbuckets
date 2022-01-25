@@ -2,6 +2,8 @@ package routers
 
 import (
 	"herbbuckets/modules/app"
+	bucketsactions "herbbuckets/modules/systems/buckets/actions"
+	bucketsmiddlewares "herbbuckets/modules/systems/buckets/middlewares"
 
 	//"herbbuckets/modules/actions"
 	"github.com/herb-go/herb/file/simplehttpserver"
@@ -23,7 +25,9 @@ var RouterFactory = router.NewFactory(func() router.Router {
 	Router.StripPrefix("/api").
 		Use(APIMiddlewares()...).
 		Handle(RouterAPIFactory.CreateRouter())
-
+	Router.StripPrefix("/file").
+		Use(bucketsmiddlewares.MiddlewarePath).
+		Handle(bucketsactions.ActionDownload)
 	//var RouterHTML = newHTMLRouter()
 	//Router.StripPrefix("/page").Use(HTMLMiddlewares()...).Handle(RouterHTML)
 

@@ -1,25 +1,19 @@
-package middleware
+package middlewares
 
 import (
 	"herbbuckets/modules/bucket"
 	"herbbuckets/modules/pathcleaner"
 	"herbbuckets/modules/systems/buckets"
 	"net/http"
-	"strings"
 
 	"github.com/herb-go/herb/middleware/router/httprouter"
 )
 
-var MiddlewarePath = func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+var MiddlewareQuery = func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	ps := httprouter.GetParams(r)
-	p := strings.TrimPrefix(r.URL.Path, "/")
-	list := strings.SplitN(p, "/", 2)
-	if len(list) != 2 {
-		http.NotFound(w, r)
-		return
-	}
-	bucketname := pathcleaner.Clean(list[0])
-	objectname := pathcleaner.Clean(list[1])
+	q := r.URL.Query()
+	bucketname := pathcleaner.Clean(q.Get(bucket.QueryFieldBucket))
+	objectname := pathcleaner.Clean(q.Get(bucket.QueryFieldObject))
 	if bucketname == "" || objectname == "" {
 		http.NotFound(w, r)
 		return
