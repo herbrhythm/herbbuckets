@@ -18,7 +18,6 @@ type SignConfig struct {
 	TimestampField string
 	SecretField    string
 	SignField      string
-	PathField      string
 	ObjectField    string
 	BucketField    string
 }

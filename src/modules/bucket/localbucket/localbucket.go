@@ -36,56 +36,39 @@ var Verifier = &bucket.Verifier{
 }
 
 type Config struct {
-	BaseURL           string
 	Public            bool
-	DataFormat        string
+	LifetimeInSeconds int64
 	Hasher            string
 	Location          string
-	LifetimeInSeconds int64
 	Cors              cors.CORS
 }
 
-func (c *Config) ApplyTo(bucketname string, b LocalBucket) error {
+func (c *Config) ApplyTo(bu *bucket.Bucket, b *LocalBucket) error {
 	b.Public = c.Public
 	b.Hasher = c.Hasher
 	b.Lifetime = time.Duration(time.Second * time.Duration(c.LifetimeInSeconds))
 	b.Cors = &c.Cors
 	b.Location = c.Location
 	if b.Location == "" {
-		b.Location = util.AppData(BucketFolder, bucketname)
+		b.Location = util.AppData(BucketFolder, bu.Name)
 	}
-	b.DateFormat = c.DataFormat
-	burl := c.BaseURL
-	if burl == "" {
-		burl = app.HTTP.Config.BaseURL
-	}
-	u, err := url.Parse(burl)
-	if err != nil {
-		return err
-	}
-	b.BasePath = u.Scheme + "//" + u.Host + u.Path
-	b.BasePath = u.Path
 	return nil
 }
 
 type LocalBucket struct {
-	BaseURL    string
-	BasePath   string
-	Public     bool
-	Location   string
-	DateFormat string
-	Hasher     string
-	Lifetime   time.Duration
-	Cors       *cors.CORS
+	Public   bool
+	Location string
+	Hasher   string
+	Lifetime time.Duration
+	Cors     *cors.CORS
 }
 
 func (b *LocalBucket) localpath(bucketname string, object string) string {
 	return filepath.Join(b.Location, bucketname, object)
 }
-func (b *LocalBucket) GrantDownloadURL(bucketname string, object string, opt *bucket.Options) (downloadurl string, err error) {
-	urlpath := path.Join(b.BasePath, bucketname, object)
+func (b *LocalBucket) GrantDownloadURL(bu *bucket.Bucket, object string, opt *bucket.Options) (downloadurl string, err error) {
 	p := urlencodesign.NewParams()
-	p.Append(app.Sign.PathField, urlpath)
+	p.Append(app.Sign.ObjectField, object)
 	p.Append(app.Sign.AppidField, opt.Appid)
 	ts := strconv.FormatInt(opt.ExpiredAt, 10)
 	p.Append(app.Sign.TimestampField, ts)
@@ -97,19 +80,18 @@ func (b *LocalBucket) GrantDownloadURL(bucketname string, object string, opt *bu
 	q.Add(app.Sign.AppidField, opt.Appid)
 	q.Add(app.Sign.TimestampField, ts)
 	q.Add(app.Sign.SignField, s)
-	return b.BaseURL + urlpath + "?" + q.Encode(), nil
-
+	return path.Join(bu.BaseURL, bu.Name, object) + "?" + q.Encode(), nil
 }
 func (b *LocalBucket) Permanent() bool {
 	return b.Public
 }
 
-func (b *LocalBucket) GrantUploadURL(bucketname string, object string, opt *bucket.Options) (uploadurl string, err error) {
+func (b *LocalBucket) GrantUploadURL(bu *bucket.Bucket, object string, opt *bucket.Options) (uploadurl string, err error) {
 	ts := strconv.FormatInt(opt.ExpiredAt, 10)
 	p := urlencodesign.NewParams()
 	p.Append(app.Sign.AppidField, opt.Appid)
 	p.Append(app.Sign.TimestampField, ts)
-	p.Append(app.Sign.BucketField, bucketname)
+	p.Append(app.Sign.BucketField, bu.Name)
 	p.Append(app.Sign.ObjectField, object)
 	s, err := urlencodesign.Sign(hasher.Md5Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
 	if err != nil {
@@ -119,12 +101,12 @@ func (b *LocalBucket) GrantUploadURL(bucketname string, object string, opt *buck
 	q.Add(app.Sign.AppidField, opt.Appid)
 	q.Add(app.Sign.SignField, s)
 	q.Add(app.Sign.TimestampField, ts)
-	q.Add(app.Sign.BucketField, bucketname)
+	q.Add(app.Sign.BucketField, bu.Name)
 	q.Add(app.Sign.ObjectField, object)
-	return b.BasePath + UploadRouter + "?" + q.Encode(), nil
+	return bu.BaseURL + UploadRouter + "?" + q.Encode(), nil
 }
-func (b *LocalBucket) Download(bucketname string, objectname string, w io.Writer) (err error) {
-	f, err := os.Open(filepath.Join(b.Location, bucketname, objectname))
+func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string, w io.Writer) (err error) {
+	f, err := os.Open(filepath.Join(b.Location, bu.Name, objectname))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return bucket.ErrNotFound
@@ -134,8 +116,17 @@ func (b *LocalBucket) Download(bucketname string, objectname string, w io.Writer
 	_, err = io.Copy(w, f)
 	return err
 }
-func (b *LocalBucket) Upload(bucketname string, objectname string, r io.Reader) (err error) {
-	f, err := os.Open(b.localpath(bucketname, objectname))
+func (b *LocalBucket) Upload(bu *bucket.Bucket, objectname string, r io.Reader) (err error) {
+	lp := b.localpath(bu.Name, objectname)
+	folder := filepath.Dir(lp)
+	_, err = os.Stat(folder)
+	if err == nil {
+		return bucket.ErrExists
+	}
+	if !os.IsNotExist(err) {
+		return err
+	}
+	f, err := os.Open(lp)
 	if err != nil {
 		return err
 	}
@@ -144,8 +135,8 @@ func (b *LocalBucket) Upload(bucketname string, objectname string, r io.Reader) 
 	return err
 }
 
-func (b *LocalBucket) GetFileinfo(bucketname string, objectname string) (info *bucket.Fileinfo, err error) {
-	stat, err := os.Stat(b.localpath(bucketname, objectname))
+func (b *LocalBucket) GetFileinfo(bu *bucket.Bucket, objectname string) (info *bucket.Fileinfo, err error) {
+	stat, err := os.Stat(b.localpath(bu.Name, objectname))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, bucket.ErrNotFound
@@ -159,8 +150,8 @@ func (b *LocalBucket) GetFileinfo(bucketname string, objectname string) (info *b
 func (b *LocalBucket) GetVerifier() *bucket.Verifier {
 	return Verifier
 }
-func (b *LocalBucket) RemoveFile(bucketname string, objectname string) error {
-	return os.Remove(b.localpath(bucketname, objectname))
+func (b *LocalBucket) RemoveFile(bu *bucket.Bucket, objectname string) error {
+	return os.Remove(b.localpath(bu.Name, objectname))
 }
 func (b *LocalBucket) ThirdpartyUpload() bool {
 	return false
@@ -174,7 +165,8 @@ func (b *LocalBucket) BucketType() string {
 func New() *LocalBucket {
 	return &LocalBucket{}
 }
-func Factory(bucketname string, loader func(v interface{}) error) (bucket.Bucket, error) {
-	b := New()
-	return b, nil
+func Builder(b *bucket.Bucket, loader func(v interface{}) error) error {
+	lb := New()
+	b.Engine = lb
+	return nil
 }

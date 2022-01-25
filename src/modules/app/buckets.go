@@ -13,7 +13,7 @@ import (
 //BucketsConfig buckets config data struct.
 //Struct must  unmarshaleable by Toml lib.
 //You should comment this struct if you use third party config struct.
-type BucketsConfig []*bucketconfig.Bucket
+type BucketsConfig []*bucketconfig.Config
 
 //Buckets config instance of buckets.
 var Buckets = &BucketsConfig{}

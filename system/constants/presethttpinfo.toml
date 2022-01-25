@@ -15,7 +15,7 @@ Field="secret"
 Name="timestampquery"
 Type="query"
 [Extractors.Config]
-Field="timestamp"
+Field="ts"
 
 [[Extractors]]
 Name="signquery"
@@ -40,23 +40,14 @@ Name="path"
 Type="path"
 
 [[Extractors]]
-Name="bucketrouter"
+Name="object"
+Type="router"
+
+[[Extractors]]
+Name="bucket"
 Type="router"
 [Extractors.Config]
 Field="bucket"
-
-[[Extractors]]
-Name="bucketquery"
-Type="query"
-[Extractors.Config]
-Field="bucket"
-
-
-[[Extractors]]
-Name="extlistquery"
-Type="query"
-[Extractors.Config]
-Field="extlist"
 
 [[Extractors]]
 Name="sizelimitquery"
@@ -64,11 +55,6 @@ Type="query"
 [Extractors.Config]
 Field="sizelimit"
 
-[[Extractors]]
-Name="uidquery"
-Type="query"
-[Extractors.Config]
-Field="uid"
 
 [[Extractors]]
 Name="basicuser"
@@ -102,23 +88,14 @@ Extractor="appidquery"
 Name="path"
 Extractor="path"
 
-[[Fields]]
-Name="bucketrouter"
-Extractor="bucketrouter"
 
 [[Fields]]
-Name="bucketquery"
-Extractor="bucketquery"
-
-
-[[Fields]]
-Name="namequery"
-Extractor="namequery"
-
+Name="object"
+Extractor="object"
 
 [[Fields]]
-Name="uidquery"
-Extractor="uidquery"
+Name="bucket"
+Extractor="bucket"
 
 [[Fields]]
 Name="basicuser"

@@ -2,6 +2,7 @@ package routers
 
 import (
 	"herbbuckets/modules/middlewares"
+	bucketsmiddleware "herbbuckets/modules/systems/buckets/middleware"
 
 	"github.com/herb-go/herb/middleware"
 	"github.com/herb-go/herb/middleware/errorpage"
@@ -14,6 +15,7 @@ var APIMiddlewares = func() middleware.Middlewares {
 	return middleware.Middlewares{
 		middlewares.MiddlewareCsrfVerifyHeader,
 		errorpage.MiddlewareDisable,
+		bucketsmiddleware.MiddlewareQuery,
 	}
 }
 

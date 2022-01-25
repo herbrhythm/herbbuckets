@@ -50,7 +50,7 @@ var DownloadURLAction = action.New(func(w http.ResponseWriter, r *http.Request) 
 	}
 	auth := protecter.LoadAuth(r)
 
-	opt := &bucket.FileOptions{}
+	opt := &bucket.Options{}
 	opt.Appid = auth.Authority().String()
 	opt.Secret = auth.Payloads().LoadString(authority.PayloadSignSecret)
 	opt.ExpiredAt = expired

@@ -1,8 +1,6 @@
 package bucketconfig
 
-type Bucket struct {
-	Name    string
-	Type    string
-	Enabled bool
-	Config  func(interface{}) error
+type Config struct {
+	Bucket
+	Config func(interface{}) error
 }

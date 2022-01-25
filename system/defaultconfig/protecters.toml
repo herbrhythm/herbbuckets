@@ -51,4 +51,4 @@ TimeOffsetMaxInSecond=7200
 "sign"="signquery"
 "appid"="appidquery"
 "object"="object"
-"bucket"="bucketquery"
+"bucket"="bucket"
