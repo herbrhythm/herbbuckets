@@ -3,6 +3,7 @@ package buckets
 import (
 	"fmt"
 	"herbbuckets/modules/app"
+	"herbbuckets/modules/bucket"
 
 	"github.com/herb-go/util"
 )
@@ -15,8 +16,9 @@ func init() {
 		//Init registered initator which registered by RegisterInitiator
 		//util.RegisterInitiator(ModuleName, "func", func(){})
 		util.InitOrderByName(ModuleName)
-		buckets := app.Buckets
-		for _, v := range *buckets {
+		util.RegisterDataFolder(bucket.BucketsFolder)
+		buckets := app.Buckets.Buckets
+		for _, v := range buckets {
 			name := v.Name
 			if Buckets[name] != nil {
 				panic(fmt.Errorf("bucket [%s] exists", name))

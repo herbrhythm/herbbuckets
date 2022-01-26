@@ -2,6 +2,8 @@ package routers
 
 import (
 	"herbbuckets/modules/middlewares"
+	"herbbuckets/modules/protecters"
+	bucketsactions "herbbuckets/modules/systems/buckets/actions"
 	bucketsmiddlewares "herbbuckets/modules/systems/buckets/middlewares"
 
 	"github.com/herb-go/herb/middleware"
@@ -15,7 +17,7 @@ var APIMiddlewares = func() middleware.Middlewares {
 	return middleware.Middlewares{
 		middlewares.MiddlewareCsrfVerifyHeader,
 		errorpage.MiddlewareDisable,
-		bucketsmiddlewares.MiddlewareQuery,
+		protecters.ProtectMiddleware("appkey"),
 	}
 }
 
@@ -23,5 +25,10 @@ var APIMiddlewares = func() middleware.Middlewares {
 var RouterAPIFactory = router.NewFactory(func() router.Router {
 	var Router = httprouter.New()
 	//Put your router configure code here
+	Router.StripPrefix("/grantdownloadurl").
+		Use(
+			bucketsmiddlewares.MiddlewarePath,
+			bucketsmiddlewares.MiddlewareAuthViewBucket,
+		).Handle(bucketsactions.ActionGrantDownloadURL)
 	return Router
 })

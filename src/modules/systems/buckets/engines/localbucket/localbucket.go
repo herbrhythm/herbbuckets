@@ -3,6 +3,7 @@ package localbucket
 import (
 	"herbbuckets/modules/app"
 	"herbbuckets/modules/bucket"
+	bucketsmiddlewares "herbbuckets/modules/systems/buckets/middlewares"
 	"io"
 	"net/http"
 	"net/url"
@@ -34,17 +35,15 @@ var Verifier = &bucket.Verifier{
 }
 
 type Config struct {
-	Public            bool
-	LifetimeInSeconds int64
-	Hasher            string
-	Location          string
-	Cors              cors.CORS
+	Public   bool
+	Hasher   string
+	Location string
+	Cors     cors.CORS
 }
 
 func (c *Config) ApplyTo(bu *bucket.Bucket, b *LocalBucket) error {
 	b.Public = c.Public
 	b.Hasher = c.Hasher
-	b.Lifetime = time.Duration(time.Second * time.Duration(c.LifetimeInSeconds))
 	b.Cors = &c.Cors
 	b.Location = c.Location
 	if b.Location == "" {
@@ -57,18 +56,20 @@ type LocalBucket struct {
 	Public   bool
 	Location string
 	Hasher   string
-	Lifetime time.Duration
 	Cors     *cors.CORS
 }
 
-func (b *LocalBucket) localpath(bucketname string, object string) string {
-	return filepath.Join(b.Location, bucketname, object)
+func (b *LocalBucket) localpath(object string) string {
+	return filepath.Join(b.Location, object)
 }
 func (b *LocalBucket) GrantDownloadURL(bu *bucket.Bucket, object string, opt *bucket.Options) (downloadurl string, err error) {
+	if b.Public {
+		return path.Join(bu.BaseURL, bucket.PrefixDownload, bu.Name, object), nil
+	}
 	p := urlencodesign.NewParams()
 	p.Append(app.Sign.ObjectField, object)
 	p.Append(app.Sign.AppidField, opt.Appid)
-	ts := strconv.FormatInt(opt.ExpiredAt, 10)
+	ts := strconv.FormatInt(time.Now().Add(opt.Lifetime).Unix(), 10)
 	p.Append(app.Sign.TimestampField, ts)
 	s, err := urlencodesign.Sign(hasher.Md5Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
 	if err != nil {
@@ -85,7 +86,7 @@ func (b *LocalBucket) Permanent() bool {
 }
 
 func (b *LocalBucket) GrantUploadURL(bu *bucket.Bucket, object string, opt *bucket.Options) (uploadurl string, err error) {
-	ts := strconv.FormatInt(opt.ExpiredAt, 10)
+	ts := strconv.FormatInt(time.Now().Add(opt.Lifetime).Unix(), 10)
 	p := urlencodesign.NewParams()
 	p.Append(app.Sign.AppidField, opt.Appid)
 	p.Append(app.Sign.TimestampField, ts)
@@ -113,7 +114,7 @@ func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string) (r io.ReadC
 	return f, nil
 }
 func (b *LocalBucket) Upload(bu *bucket.Bucket, objectname string) (w io.WriteCloser, err error) {
-	lp := b.localpath(bu.Name, objectname)
+	lp := b.localpath(objectname)
 	folder := filepath.Dir(lp)
 	_, err = os.Stat(folder)
 	if err == nil {
@@ -124,13 +125,19 @@ func (b *LocalBucket) Upload(bu *bucket.Bucket, objectname string) (w io.WriteCl
 	}
 	return os.Open(lp)
 }
-func (b *LocalBucket) ServeHTTPDownload(w http.ResponseWriter, r *http.Request) {
-	bu := bucket.GetBucketFromRequest(r)
+func (b *LocalBucket) serveHTTPDownload(w http.ResponseWriter, r *http.Request) {
 	objectname := httprouter.GetParams(r).Get(bucket.RouterParamObject)
-	simplehttpserver.ServeFile(filepath.Join(b.Location, bu.Name, objectname)).ServeHTTP(w, r)
+	simplehttpserver.ServeFile(b.localpath(objectname)).ServeHTTP(w, r)
+}
+func (b *LocalBucket) ServeHTTPDownload(w http.ResponseWriter, r *http.Request) {
+	if !b.Public {
+		bucketsmiddlewares.MiddlewareSignDownload(w, r, b.serveHTTPDownload)
+		return
+	}
+	b.serveHTTPDownload(w, r)
 }
 func (b *LocalBucket) GetFileinfo(bu *bucket.Bucket, objectname string) (info *bucket.Fileinfo, err error) {
-	stat, err := os.Stat(b.localpath(bu.Name, objectname))
+	stat, err := os.Stat(b.localpath(objectname))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, bucket.ErrNotFound
@@ -145,7 +152,7 @@ func (b *LocalBucket) GetVerifier() *bucket.Verifier {
 	return Verifier
 }
 func (b *LocalBucket) RemoveFile(bu *bucket.Bucket, objectname string) error {
-	return os.Remove(b.localpath(bu.Name, objectname))
+	return os.Remove(b.localpath(objectname))
 }
 func (b *LocalBucket) ThirdpartyUpload() bool {
 	return false
@@ -156,11 +163,31 @@ func (b *LocalBucket) ThirdpartyDownload() bool {
 func (b *LocalBucket) BucketType() string {
 	return BucketType
 }
+func (b *LocalBucket) Start() error {
+	return nil
+}
+func (b *LocalBucket) Stop() error {
+	return nil
+}
 func New() *LocalBucket {
 	return &LocalBucket{}
 }
 func Builder(b *bucket.Bucket, loader func(v interface{}) error) error {
 	lb := New()
+	config := &Config{}
+	err := loader(config)
+	if err != nil {
+		return err
+	}
+	err = config.ApplyTo(b, lb)
+	if err != nil {
+		return err
+	}
 	b.Engine = lb
 	return nil
+}
+
+func init() {
+	bucket.Builders[""] = Builder
+	bucket.Builders[BucketType] = Builder
 }

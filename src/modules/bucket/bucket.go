@@ -24,9 +24,13 @@ type Verifier struct {
 	Required string
 }
 type Options struct {
-	Appid     string
-	Secret    string
-	ExpiredAt int64
+	Appid    string
+	Secret   string
+	Lifetime time.Duration
+}
+
+func NewOptions() *Options {
+	return &Options{}
 }
 
 type Bucket struct {
@@ -38,6 +42,7 @@ type Bucket struct {
 	Cors       *cors.CORS
 	Referrer   []string
 	BaseURL    string
+	Sizelimit  int64
 	Engine     Engine
 }
 
@@ -53,6 +58,10 @@ func (b *Bucket) InitWith(config *bucketconfig.Config) error {
 		b.DateFormat = app.System.DateFormat
 	}
 	b.Lifetime = time.Duration(config.LifetimeInSeconds) * time.Second
+	if b.Lifetime <= 0 {
+		b.Lifetime = time.Duration(app.System.LifetimeInSeconds) * time.Second
+	}
+	b.Sizelimit = config.Sizelimit
 	b.Cors = &config.Cors
 	b.Referrer = config.Referrer
 	b.BaseURL = config.BaseURL
@@ -78,6 +87,6 @@ type Engine interface {
 	Download(b *Bucket, objectname string) (r io.ReadCloser, err error)
 	Upload(b *Bucket, objectname string) (w io.WriteCloser, err error)
 	GetFileinfo(b *Bucket, objectname string) (info *Fileinfo, err error)
+	Start() error
+	Stop() error
 }
-
-type Builder func(b *bucketconfig.Bucket, loader func(v interface{}) error) error

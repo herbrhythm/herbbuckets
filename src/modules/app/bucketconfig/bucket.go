@@ -12,5 +12,6 @@ type Bucket struct {
 	LifetimeInSeconds int64
 	Cors              cors.CORS
 	Referrer          []string
+	Sizelimit         int64
 	BaseURL           string
 }

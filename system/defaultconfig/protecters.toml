@@ -19,9 +19,9 @@ AuthType="hired.TOMLAppKeySigner"
 # Example:https://github.com/herb-go/providers/blob/master/herb/statictoml/tomlappkey/example.toml 
 Source="appdata/appkey.static.toml"
 Hash="md5"
-TimeOffsetMaxInSecond=7200
+TimeOffsetMaxInSecond=600
 [Protecters.AuthConfig.Fields]
-"timestamp"="timestamp"
+"timestamp"="ts"
 "appid"="appid"
 "secret"="secret"
 "object"="object"
@@ -39,9 +39,9 @@ AuthType="hired.TOMLAppKeySigner"
 # Example:https://github.com/herb-go/providers/blob/master/herb/statictoml/tomlappkey/example.toml 
 Source="appdata/appkey.static.toml"
 Hash="md5"
-TimeOffsetMaxInSecond=7200
+TimeOffsetMaxInSecond=600
 [Protecters.AuthConfig.Fields]
-"timestamp"="timestamp"
+"timestamp"="ts"
 "appid"="appid"
 "secret"="secret"
 "object"="object"

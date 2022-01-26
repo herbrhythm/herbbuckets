@@ -13,7 +13,8 @@ import (
 //Struct must  unmarshaleable by Toml lib.
 //You should comment this struct if you use third party config struct.
 type SystemConfig struct {
-	DateFormat string
+	DateFormat        string
+	LifetimeInSeconds int64
 }
 
 //System config instance of system.

@@ -2,12 +2,15 @@ package bucket
 
 import (
 	"context"
+	"herbbuckets/modules/protecters"
 	"net/http"
 )
 
+var ProtecterDownload = protecters.Get("appkeysecret")
+
 const BucketsFolder = "buckets"
 
-const PrefixDownload = "/download"
+const PrefixDownload = "/file"
 
 const PrefixUpload = "/upload"
 

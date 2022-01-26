@@ -42,6 +42,8 @@ Type="path"
 [[Extractors]]
 Name="object"
 Type="router"
+[Extractors.Config]
+Field="object"
 
 [[Extractors]]
 Name="bucket"
