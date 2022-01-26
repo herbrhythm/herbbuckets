@@ -18,15 +18,26 @@ func NewFileinfo() *Fileinfo {
 	return &Fileinfo{}
 }
 
-type Verifier struct {
-	CodeMin  int
-	CodeMax  int
-	Required string
+type WebuploadInfo struct {
+	UploadURL      string
+	UploadType     string
+	PostBody       map[string]string
+	FileField      string
+	SuccessCodeMin int
+	SuccessCodeMax int
 }
+
+func NewWebuploadInfo() *WebuploadInfo {
+	return &WebuploadInfo{
+		PostBody: map[string]string{},
+	}
+}
+
 type Options struct {
-	Appid    string
-	Secret   string
-	Lifetime time.Duration
+	Appid     string
+	Secret    string
+	Sizelimit int64
+	Lifetime  time.Duration
 }
 
 func NewOptions() *Options {
@@ -76,12 +87,11 @@ func New() *Bucket {
 
 type Engine interface {
 	GrantDownloadURL(b *Bucket, objectname string, opt *Options) (url string, err error)
-	GrantUploadURL(b *Bucket, objectname string, opt *Options) (uploadurl string, err error)
+	GrantUploadInfo(b *Bucket, objectname string, opt *Options) (info *WebuploadInfo, err error)
 	RemoveFile(b *Bucket, objectname string) error
 	Permanent() bool
 	ThirdpartyUpload() bool
 	ThirdpartyDownload() bool
-	GetVerifier() *Verifier
 	BucketType() string
 	ServeHTTPDownload(w http.ResponseWriter, r *http.Request)
 	Download(b *Bucket, objectname string) (r io.ReadCloser, err error)

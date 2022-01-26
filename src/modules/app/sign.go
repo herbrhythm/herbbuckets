@@ -20,6 +20,7 @@ type SignConfig struct {
 	SignField      string
 	ObjectField    string
 	BucketField    string
+	SizelimitField string
 }
 
 //Sign config instance of sign.

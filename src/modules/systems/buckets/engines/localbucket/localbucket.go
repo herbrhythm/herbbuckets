@@ -28,12 +28,6 @@ const DefaultDataformat = "2006/01"
 
 const ExtentionsSeparator = ","
 
-var Verifier = &bucket.Verifier{
-	CodeMin:  200,
-	CodeMax:  200,
-	Required: "success",
-}
-
 type Config struct {
 	Public   bool
 	Hasher   string
@@ -84,17 +78,25 @@ func (b *LocalBucket) GrantDownloadURL(bu *bucket.Bucket, object string, opt *bu
 func (b *LocalBucket) Permanent() bool {
 	return b.Public
 }
-
-func (b *LocalBucket) GrantUploadURL(bu *bucket.Bucket, object string, opt *bucket.Options) (uploadurl string, err error) {
+func (b *LocalBucket) newWebuploadInfo() *bucket.WebuploadInfo {
+	info := bucket.NewWebuploadInfo()
+	info.SuccessCodeMin = 200
+	info.SuccessCodeMax = 299
+	info.FileField = "file"
+	return info
+}
+func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, object string, opt *bucket.Options) (info *bucket.WebuploadInfo, err error) {
 	ts := strconv.FormatInt(time.Now().Add(opt.Lifetime).Unix(), 10)
+	sizelimit := strconv.FormatInt(opt.Sizelimit, 10)
 	p := urlencodesign.NewParams()
 	p.Append(app.Sign.AppidField, opt.Appid)
 	p.Append(app.Sign.TimestampField, ts)
 	p.Append(app.Sign.BucketField, bu.Name)
 	p.Append(app.Sign.ObjectField, object)
+	p.Append(app.Sign.SizelimitField, sizelimit)
 	s, err := urlencodesign.Sign(hasher.Md5Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	q := &url.Values{}
 	q.Add(app.Sign.AppidField, opt.Appid)
@@ -102,7 +104,10 @@ func (b *LocalBucket) GrantUploadURL(bu *bucket.Bucket, object string, opt *buck
 	q.Add(app.Sign.TimestampField, ts)
 	q.Add(app.Sign.BucketField, bu.Name)
 	q.Add(app.Sign.ObjectField, object)
-	return path.Join(bu.BaseURL+bucket.PrefixUpload) + "?" + q.Encode(), nil
+	q.Add(app.Sign.SizelimitField, sizelimit)
+	info = b.newWebuploadInfo()
+	info.UploadURL = path.Join(bu.BaseURL+bucket.PrefixUpload) + "?" + q.Encode()
+	return info, nil
 }
 func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string) (r io.ReadCloser, err error) {
 	f, err := os.Open(filepath.Join(b.Location, bu.Name, objectname))
@@ -148,9 +153,7 @@ func (b *LocalBucket) GetFileinfo(bu *bucket.Bucket, objectname string) (info *b
 	info.Size = stat.Size()
 	return info, nil
 }
-func (b *LocalBucket) GetVerifier() *bucket.Verifier {
-	return Verifier
-}
+
 func (b *LocalBucket) RemoveFile(bu *bucket.Bucket, objectname string) error {
 	return os.Remove(b.localpath(objectname))
 }

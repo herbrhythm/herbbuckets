@@ -45,6 +45,7 @@ TimeOffsetMaxInSecond=600
 "appid"="appid"
 "secret"="secret"
 "object"="object"
+"sizelimit"="sizelimit"
 "bucket"="bucket"
 [Protecters.Fields]
 "timestamp"="timestampquery"
@@ -52,3 +53,4 @@ TimeOffsetMaxInSecond=600
 "appid"="appidquery"
 "object"="object"
 "bucket"="bucket"
+"sizelimit"="sizelimit"

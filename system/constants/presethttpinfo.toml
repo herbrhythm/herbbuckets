@@ -106,3 +106,7 @@ Extractor="basicuser"
 [[Fields]]
 Name="basicpassword"
 Extractor="basicpassword"
+
+[[Fields]]
+Name="sizelimit"
+Extractor="sizelimitquery"
