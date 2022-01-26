@@ -20,6 +20,9 @@ func NewFileinfo() *Fileinfo {
 
 type WebuploadInfo struct {
 	UploadURL      string
+	PreviewURL     string
+	Bucket         string
+	Objcet         string
 	UploadType     string
 	PostBody       map[string]string
 	FileField      string

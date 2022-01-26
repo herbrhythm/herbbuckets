@@ -98,6 +98,10 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, object string, opt *buc
 	if err != nil {
 		return nil, err
 	}
+	previewurl, err := b.GrantDownloadURL(bu, object, opt)
+	if err != nil {
+		return nil, err
+	}
 	q := &url.Values{}
 	q.Add(app.Sign.AppidField, opt.Appid)
 	q.Add(app.Sign.SignField, s)
@@ -107,6 +111,9 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, object string, opt *buc
 	q.Add(app.Sign.SizelimitField, sizelimit)
 	info = b.newWebuploadInfo()
 	info.UploadURL = path.Join(bu.BaseURL+bucket.PrefixUpload) + "?" + q.Encode()
+	info.PreviewURL = previewurl
+	info.Bucket = bu.Name
+	info.Objcet = object
 	return info, nil
 }
 func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string) (r io.ReadCloser, err error) {
