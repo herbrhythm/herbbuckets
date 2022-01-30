@@ -27,7 +27,18 @@ func init() {
 			if err != nil {
 				panic(err)
 			}
-			Buckets[name] = b
+			if !b.Disabled {
+				Buckets[name] = b
+				util.Must(b.Engine.Start())
+			}
 		}
+		util.OnQuit(func() {
+			for _, v := range Buckets {
+				err := v.Engine.Stop()
+				if err != nil {
+					util.LogError(err)
+				}
+			}
+		})
 	})
 }

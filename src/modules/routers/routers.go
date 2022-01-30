@@ -2,6 +2,7 @@ package routers
 
 import (
 	"herbbuckets/modules/app"
+	"herbbuckets/modules/protecters"
 	bucketsactions "herbbuckets/modules/systems/buckets/actions"
 	bucketsmiddlewares "herbbuckets/modules/systems/buckets/middlewares"
 
@@ -28,6 +29,15 @@ var RouterFactory = router.NewFactory(func() router.Router {
 	Router.StripPrefix("/file").
 		Use(bucketsmiddlewares.MiddlewarePath).
 		Handle(bucketsactions.ActionDownload)
+	Router.StripPrefix("/upload").
+		Use(
+			bucketsmiddlewares.MiddlewarePath,
+			protecters.ProtectMiddleware("webupload"),
+			bucketsmiddlewares.MiddlewareWebuploadCORS,
+			bucketsmiddlewares.MiddlewareAuthUploadBucket,
+		).
+		Handle(bucketsactions.ActionUpload)
+
 	//var RouterHTML = newHTMLRouter()
 	//Router.StripPrefix("/page").Use(HTMLMiddlewares()...).Handle(RouterHTML)
 

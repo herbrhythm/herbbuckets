@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/herb-go/herb-go/modules/cors"
+	"github.com/herb-go/herb/middleware/cors"
 )
 
 type Fileinfo struct {
@@ -21,9 +21,11 @@ func NewFileinfo() *Fileinfo {
 type WebuploadInfo struct {
 	UploadURL      string
 	PreviewURL     string
+	Permanent      bool
 	Bucket         string
 	Objcet         string
 	UploadType     string
+	Sizelimit      int64
 	PostBody       map[string]string
 	FileField      string
 	SuccessCodeMin int
@@ -50,7 +52,8 @@ func NewOptions() *Options {
 type Bucket struct {
 	Name       string
 	Type       string
-	Enabled    bool
+	Disabled   bool
+	Prefix     string
 	DateFormat string
 	Lifetime   time.Duration
 	Cors       *cors.CORS
@@ -66,7 +69,7 @@ func (b *Bucket) Verify() error {
 func (b *Bucket) InitWith(config *bucketconfig.Config) error {
 	b.Name = config.Name
 	b.Type = config.Type
-	b.Enabled = config.Enabled
+	b.Disabled = config.Disabled
 	b.DateFormat = config.DateFormat
 	if b.DateFormat == "" {
 		b.DateFormat = app.System.DateFormat
@@ -82,6 +85,7 @@ func (b *Bucket) InitWith(config *bucketconfig.Config) error {
 	if b.BaseURL == "" {
 		b.BaseURL = app.HTTP.Config.BaseURL
 	}
+	b.Prefix = config.Prefix
 	return b.Verify()
 }
 func New() *Bucket {

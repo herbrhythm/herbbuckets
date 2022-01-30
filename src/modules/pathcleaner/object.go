@@ -2,13 +2,16 @@ package pathcleaner
 
 import (
 	"herbbuckets/modules/app"
-	"herbbuckets/modules/app/bucketconfig"
+	"herbbuckets/modules/bucket"
 	"herbbuckets/modules/uniqueid"
 	"path"
 )
 
-func CreateObjectID(bu *bucketconfig.Bucket, tag string, filename string) string {
+func CreateObjectID(bu *bucket.Bucket, filename string) string {
 	var result = make([]string, 0, 4)
+	if bu.Prefix != "" {
+		result = append(result, bu.Prefix)
+	}
 	dateformat := bu.DateFormat
 	if dateformat == "" {
 		dateformat = app.System.DateFormat
@@ -17,9 +20,6 @@ func CreateObjectID(bu *bucketconfig.Bucket, tag string, filename string) string
 		result = append(result, app.Time.FormatNow(dateformat))
 	}
 	result = append(result, uniqueid.MustGenerateID())
-	if tag != "" {
-		result = append(result, tag)
-	}
 	result = append(result, filename)
 	return Clean(path.Join(result...))
 }

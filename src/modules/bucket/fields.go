@@ -17,6 +17,13 @@ const PrefixUpload = "/upload"
 const QueryFieldBucket = "bucket"
 const QueryFieldObject = "object"
 
+const QueryFieldTTL = "ttl"
+const QueryFieldSizelimit = "sizelimit"
+const QueryFieldSize = "size"
+const QueryFieldFilename = "filename"
+
+const PostFieldFile = "file"
+
 const RouterParamBucket = "bucket"
 const RouterParamObject = "object"
 

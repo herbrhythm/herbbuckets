@@ -82,7 +82,8 @@ func (b *LocalBucket) newWebuploadInfo() *bucket.WebuploadInfo {
 	info := bucket.NewWebuploadInfo()
 	info.SuccessCodeMin = 200
 	info.SuccessCodeMax = 299
-	info.FileField = "file"
+	info.Permanent = b.Public
+	info.FileField = bucket.PostFieldFile
 	return info
 }
 func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, object string, opt *bucket.Options) (info *bucket.WebuploadInfo, err error) {
@@ -107,13 +108,13 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, object string, opt *buc
 	q.Add(app.Sign.SignField, s)
 	q.Add(app.Sign.TimestampField, ts)
 	q.Add(app.Sign.BucketField, bu.Name)
-	q.Add(app.Sign.ObjectField, object)
 	q.Add(app.Sign.SizelimitField, sizelimit)
 	info = b.newWebuploadInfo()
-	info.UploadURL = path.Join(bu.BaseURL+bucket.PrefixUpload) + "?" + q.Encode()
+	info.UploadURL = path.Join(bu.BaseURL+bucket.PrefixUpload, bu.Name, object) + "?" + q.Encode()
 	info.PreviewURL = previewurl
 	info.Bucket = bu.Name
 	info.Objcet = object
+	info.Sizelimit = opt.Sizelimit
 	return info, nil
 }
 func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string) (r io.ReadCloser, err error) {
@@ -135,7 +136,8 @@ func (b *LocalBucket) Upload(bu *bucket.Bucket, objectname string) (w io.WriteCl
 	if !os.IsNotExist(err) {
 		return nil, err
 	}
-	return os.Open(lp)
+	os.MkdirAll(folder, util.DefaultFolderMode)
+	return os.Create(lp)
 }
 func (b *LocalBucket) serveHTTPDownload(w http.ResponseWriter, r *http.Request) {
 	objectname := httprouter.GetParams(r).Get(bucket.RouterParamObject)

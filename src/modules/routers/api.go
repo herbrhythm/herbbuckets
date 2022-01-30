@@ -30,5 +30,10 @@ var RouterAPIFactory = router.NewFactory(func() router.Router {
 			bucketsmiddlewares.MiddlewarePath,
 			bucketsmiddlewares.MiddlewareAuthViewBucket,
 		).Handle(bucketsactions.ActionGrantDownloadURL)
+	Router.StripPrefix("/grantuploadurl").
+		Use(
+			bucketsmiddlewares.MiddlewareBase,
+			bucketsmiddlewares.MiddlewareAuthUploadBucket,
+		).Handle(bucketsactions.ActionGrantUploadURL)
 	return Router
 })

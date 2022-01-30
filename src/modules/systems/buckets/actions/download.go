@@ -52,13 +52,13 @@ var ActionGrantDownloadURL = action.New(func(w http.ResponseWriter, r *http.Requ
 	bu := bucket.GetBucketFromRequest(r)
 	objectname := httprouter.GetParams(r).Get(bucket.RouterParamObject)
 	q := r.URL.Query()
-	ttl := q.Get("ttl")
+	ttl := q.Get(bucket.QueryFieldTTL)
 	if ttl == "" {
 		ttl = "0"
 	}
 	ttli, err := strconv.ParseInt(ttl, 10, 64)
 	if err != nil {
-		formerr.AddPlainError("ttl", "TTL format error")
+		formerr.AddPlainError(bucket.QueryFieldTTL, "TTL format error")
 		render.MustJSON(w, formerr.Errors(), 422)
 		return
 	}
