@@ -24,21 +24,18 @@ import (
 
 const BucketType = "local"
 
-const DefaultDataformat = "2006/01"
-
 const ExtentionsSeparator = ","
 
 type Config struct {
 	Public   bool
 	Hasher   string
 	Location string
-	Cors     cors.CORS
 }
 
 func (c *Config) ApplyTo(bu *bucket.Bucket, b *LocalBucket) error {
 	b.Public = c.Public
 	b.Hasher = c.Hasher
-	b.Cors = &c.Cors
+	b.Cors = bu.Cors
 	b.Location = c.Location
 	if b.Location == "" {
 		b.Location = util.AppData(bucket.BucketsFolder, bu.Name)
@@ -47,10 +44,11 @@ func (c *Config) ApplyTo(bu *bucket.Bucket, b *LocalBucket) error {
 }
 
 type LocalBucket struct {
-	Public   bool
-	Location string
-	Hasher   string
-	Cors     *cors.CORS
+	Public    bool
+	Location  string
+	Hasher    string
+	Temporary bool
+	Cors      *cors.CORS
 }
 
 func (b *LocalBucket) localpath(object string) string {
