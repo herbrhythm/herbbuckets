@@ -2,6 +2,7 @@ package actions
 
 import (
 	"herbbuckets/modules/bucket"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -80,4 +81,23 @@ var ActionGrantDownloadURL = action.New(func(w http.ResponseWriter, r *http.Requ
 		panic(err)
 	}
 	w.Write([]byte(u))
+})
+
+var ActionContent = action.New(func(w http.ResponseWriter, r *http.Request) {
+	bu := bucket.GetBucketFromRequest(r)
+	objectname := httprouter.GetParams(r).Get(bucket.RouterParamObject)
+	re, err := bu.Engine.Download(bu, objectname)
+	if err != nil {
+		if err == bucket.ErrNotFound {
+			http.NotFound(w, r)
+			return
+		}
+		panic(err)
+	}
+	defer re.Close()
+	w.WriteHeader(200)
+	_, err = io.Copy(w, re)
+	if err != nil {
+		panic(err)
+	}
 })

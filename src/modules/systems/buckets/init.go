@@ -20,6 +20,9 @@ func init() {
 		buckets := app.Buckets.Buckets
 		for _, v := range buckets {
 			name := v.Name
+			if !bucket.NameRegexp.MatchString(v.Name) {
+				panic(fmt.Errorf("bucket name format error [%s]", name))
+			}
 			if Buckets[name] != nil {
 				panic(fmt.Errorf("bucket [%s] exists", name))
 			}
@@ -30,15 +33,8 @@ func init() {
 			if !b.Disabled {
 				Buckets[name] = b
 				util.Must(b.Engine.Start())
+				go util.OnQuitAndLogError(b.Engine.Stop)
 			}
 		}
-		util.OnQuit(func() {
-			for _, v := range Buckets {
-				err := v.Engine.Stop()
-				if err != nil {
-					util.LogError(err)
-				}
-			}
-		})
 	})
 }

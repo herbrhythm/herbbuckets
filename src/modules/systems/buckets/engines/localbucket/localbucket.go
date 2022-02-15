@@ -84,8 +84,9 @@ func (b *LocalBucket) newWebuploadInfo() *bucket.WebuploadInfo {
 	info.FileField = bucket.PostFieldFile
 	return info
 }
-func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, object string, opt *bucket.Options) (info *bucket.WebuploadInfo, err error) {
-	ts := strconv.FormatInt(time.Now().Add(opt.Lifetime).Unix(), 10)
+func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, id string, object string, opt *bucket.Options) (info *bucket.WebuploadInfo, err error) {
+	expired := time.Now().Add(opt.Lifetime).Unix()
+	ts := strconv.FormatInt(expired, 10)
 	sizelimit := strconv.FormatInt(opt.Sizelimit, 10)
 	p := urlencodesign.NewParams()
 	p.Append(app.Sign.AppidField, opt.Appid)
@@ -111,12 +112,14 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, object string, opt *buc
 	info.UploadURL = path.Join(bu.BaseURL+bucket.PrefixUpload, bu.Name, object) + "?" + q.Encode()
 	info.PreviewURL = previewurl
 	info.Bucket = bu.Name
-	info.Objcet = object
+	info.ID = id
+	info.Object = object
 	info.Sizelimit = opt.Sizelimit
+	info.ExpiredAt = expired
 	return info, nil
 }
 func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string) (r io.ReadCloser, err error) {
-	f, err := os.Open(filepath.Join(b.Location, bu.Name, objectname))
+	f, err := os.Open(b.localpath(objectname))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, bucket.ErrNotFound
@@ -162,7 +165,14 @@ func (b *LocalBucket) GetFileinfo(bu *bucket.Bucket, objectname string) (info *b
 }
 
 func (b *LocalBucket) RemoveFile(bu *bucket.Bucket, objectname string) error {
-	return os.Remove(b.localpath(objectname))
+	err := os.Remove(b.localpath(objectname))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return bucket.ErrNotFound
+		}
+		return err
+	}
+	return nil
 }
 func (b *LocalBucket) ThirdpartyUpload() bool {
 	return false

@@ -3,6 +3,7 @@ package actions
 import (
 	"herbbuckets/modules/bucket"
 	"herbbuckets/modules/pathcleaner"
+	"herbbuckets/modules/uniqueid"
 	"io"
 	"net/http"
 	"path"
@@ -17,6 +18,59 @@ import (
 	"github.com/herb-go/herbsecurity/authority"
 )
 
+type SaveResult struct {
+	ID     string
+	Bucket string
+	Object string
+}
+
+var ActionSave = action.New(func(w http.ResponseWriter, r *http.Request) {
+	formerr := &validator.Validator{}
+	bu := bucket.GetBucketFromRequest(r)
+	q := r.URL.Query()
+	file, _, err := r.FormFile(bucket.PostFieldFile)
+	if err != nil {
+		if err == http.ErrMissingFile || err == http.ErrNotMultipart {
+			formerr.AddPlainError(bucket.PostFieldFile, "File required")
+			render.MustJSON(w, formerr.Errors(), 422)
+			return
+		}
+		panic(err)
+	}
+	defer file.Close()
+	id := uniqueid.MustGenerateID()
+	filename := q.Get(bucket.QueryFieldFilename)
+	if filename == "" {
+		formerr.AddPlainError(bucket.QueryFieldFilename, "Filename required")
+		render.MustJSON(w, formerr.Errors(), 422)
+		return
+	}
+	if path.Base(filename) != filename {
+		formerr.AddPlainError(bucket.QueryFieldFilename, "Filename format error")
+		render.MustJSON(w, formerr.Errors(), 422)
+		return
+	}
+	objectname := pathcleaner.CreateObjectID(bu, id, filename)
+	writer, err := bu.Engine.Upload(bu, objectname)
+	if err != nil {
+		if err == bucket.ErrExists {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+		panic(err)
+	}
+	defer writer.Close()
+	_, err = io.Copy(writer, file)
+	if err != nil {
+		panic(err)
+	}
+	result := SaveResult{
+		ID:     id,
+		Bucket: bu.Name,
+		Object: objectname,
+	}
+	render.MustJSON(w, result, 200)
+})
 var ActionUpload = action.New(func(w http.ResponseWriter, r *http.Request) {
 	formerr := &validator.Validator{}
 	bu := bucket.GetBucketFromRequest(r)
@@ -131,14 +185,15 @@ var ActionGrantUploadURL = action.New(func(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	sizelimit = size
-	object := pathcleaner.CreateObjectID(bu, filename)
+	id := uniqueid.MustGenerateID()
+	object := pathcleaner.CreateObjectID(bu, id, filename)
 	opt := bucket.NewOptions()
 	auth := protecter.LoadAuth(r)
 	opt.Appid = auth.Authority().String()
 	opt.Lifetime = lifetime
 	opt.Sizelimit = sizelimit
 	opt.Secret = auth.Payloads().LoadString(authority.PayloadSignSecret)
-	info, err := bu.Engine.GrantUploadInfo(bu, object, opt)
+	info, err := bu.Engine.GrantUploadInfo(bu, id, object, opt)
 	if err != nil {
 		panic(err)
 	}

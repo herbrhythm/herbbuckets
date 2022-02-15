@@ -5,10 +5,13 @@ import (
 	"herbbuckets/modules/app/bucketconfig"
 	"io"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/herb-go/herb/middleware/cors"
 )
+
+var NameRegexp = regexp.MustCompile(`^[a-zA-Z0-9\-_\.]{1,64}$`)
 
 type Fileinfo struct {
 	Size int64
@@ -19,13 +22,15 @@ func NewFileinfo() *Fileinfo {
 }
 
 type WebuploadInfo struct {
+	ID             string
 	UploadURL      string
 	PreviewURL     string
 	Permanent      bool
 	Bucket         string
-	Objcet         string
+	Object         string
 	UploadType     string
 	Sizelimit      int64
+	ExpiredAt      int64
 	PostBody       map[string]string
 	FileField      string
 	SuccessCodeMin int
@@ -94,7 +99,7 @@ func New() *Bucket {
 
 type Engine interface {
 	GrantDownloadURL(b *Bucket, objectname string, opt *Options) (url string, err error)
-	GrantUploadInfo(b *Bucket, objectname string, opt *Options) (info *WebuploadInfo, err error)
+	GrantUploadInfo(b *Bucket, id string, objectname string, opt *Options) (info *WebuploadInfo, err error)
 	RemoveFile(b *Bucket, objectname string) error
 	Permanent() bool
 	ThirdpartyUpload() bool
