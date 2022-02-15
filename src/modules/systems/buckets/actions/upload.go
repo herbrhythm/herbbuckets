@@ -127,7 +127,7 @@ var ActionUpload = action.New(func(w http.ResponseWriter, r *http.Request) {
 	}
 	render.MustJSON(w, "success", 200)
 })
-var ActionGrantUploadURL = action.New(func(w http.ResponseWriter, r *http.Request) {
+var ActionGrantUploadInfo = action.New(func(w http.ResponseWriter, r *http.Request) {
 	formerr := &validator.Validator{}
 	bu := bucket.GetBucketFromRequest(r)
 	q := r.URL.Query()

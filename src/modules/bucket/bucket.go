@@ -14,11 +14,22 @@ import (
 var NameRegexp = regexp.MustCompile(`^[a-zA-Z0-9\-_\.]{1,64}$`)
 
 type Fileinfo struct {
-	Size int64
+	Size    int64
+	Modtime int64
 }
 
 func NewFileinfo() *Fileinfo {
 	return &Fileinfo{}
+}
+
+type DownloadInfo struct {
+	URL       string
+	ExpiredAt int64
+	Permanent bool
+}
+
+func NewDownloadInfo() *DownloadInfo {
+	return &DownloadInfo{}
 }
 
 type WebuploadInfo struct {
@@ -98,7 +109,7 @@ func New() *Bucket {
 }
 
 type Engine interface {
-	GrantDownloadURL(b *Bucket, objectname string, opt *Options) (url string, err error)
+	GrantDownloadInfo(b *Bucket, objectname string, opt *Options) (info *DownloadInfo, err error)
 	GrantUploadInfo(b *Bucket, id string, objectname string, opt *Options) (info *WebuploadInfo, err error)
 	RemoveFile(b *Bucket, objectname string) error
 	Permanent() bool

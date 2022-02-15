@@ -54,24 +54,36 @@ type LocalBucket struct {
 func (b *LocalBucket) localpath(object string) string {
 	return filepath.Join(b.Location, object)
 }
-func (b *LocalBucket) GrantDownloadURL(bu *bucket.Bucket, object string, opt *bucket.Options) (downloadurl string, err error) {
+func (b *LocalBucket) newDownloadInfo() *bucket.DownloadInfo {
+	info := bucket.NewDownloadInfo()
+	return info
+}
+
+func (b *LocalBucket) GrantDownloadInfo(bu *bucket.Bucket, object string, opt *bucket.Options) (info *bucket.DownloadInfo, err error) {
+	info = b.newDownloadInfo()
 	if b.Public {
-		return path.Join(bu.BaseURL, bucket.PrefixDownload, bu.Name, object), nil
+		info.Permanent = true
+		info.URL = path.Join(bu.BaseURL, bucket.PrefixDownload, bu.Name, object)
+		return info, nil
 	}
 	p := urlencodesign.NewParams()
 	p.Append(app.Sign.ObjectField, object)
 	p.Append(app.Sign.AppidField, opt.Appid)
-	ts := strconv.FormatInt(time.Now().Add(opt.Lifetime).Unix(), 10)
+	expired := time.Now().Add(opt.Lifetime).Unix()
+	ts := strconv.FormatInt(expired, 10)
 	p.Append(app.Sign.TimestampField, ts)
 	s, err := urlencodesign.Sign(hasher.Md5Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	q := &url.Values{}
 	q.Add(app.Sign.AppidField, opt.Appid)
 	q.Add(app.Sign.TimestampField, ts)
 	q.Add(app.Sign.SignField, s)
-	return path.Join(bu.BaseURL, bucket.PrefixDownload, bu.Name, object) + "?" + q.Encode(), nil
+	info.URL = path.Join(bu.BaseURL, bucket.PrefixDownload, bu.Name, object) + "?" + q.Encode()
+	info.Permanent = false
+	info.ExpiredAt = expired
+	return info, nil
 }
 func (b *LocalBucket) Permanent() bool {
 	return b.Public
@@ -98,7 +110,7 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, id string, object strin
 	if err != nil {
 		return nil, err
 	}
-	previewurl, err := b.GrantDownloadURL(bu, object, opt)
+	downloadinfo, err := b.GrantDownloadInfo(bu, object, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +122,7 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, id string, object strin
 	q.Add(app.Sign.SizelimitField, sizelimit)
 	info = b.newWebuploadInfo()
 	info.UploadURL = path.Join(bu.BaseURL+bucket.PrefixUpload, bu.Name, object) + "?" + q.Encode()
-	info.PreviewURL = previewurl
+	info.PreviewURL = downloadinfo.URL
 	info.Bucket = bu.Name
 	info.ID = id
 	info.Object = object
@@ -161,6 +173,7 @@ func (b *LocalBucket) GetFileinfo(bu *bucket.Bucket, objectname string) (info *b
 	}
 	info = bucket.NewFileinfo()
 	info.Size = stat.Size()
+	info.Modtime = stat.ModTime().Unix()
 	return info, nil
 }
 

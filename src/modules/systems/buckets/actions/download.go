@@ -48,7 +48,7 @@ var ActionDownload = action.New(func(w http.ResponseWriter, r *http.Request) {
 	bu.Engine.ServeHTTPDownload(w, r)
 })
 
-var ActionGrantDownloadURL = action.New(func(w http.ResponseWriter, r *http.Request) {
+var ActionGrantDownloadInfo = action.New(func(w http.ResponseWriter, r *http.Request) {
 	formerr := &validator.Validator{}
 	bu := bucket.GetBucketFromRequest(r)
 	objectname := httprouter.GetParams(r).Get(bucket.RouterParamObject)
@@ -72,7 +72,7 @@ var ActionGrantDownloadURL = action.New(func(w http.ResponseWriter, r *http.Requ
 	opt.Appid = auth.Authority().String()
 	opt.Lifetime = lifetime
 	opt.Secret = auth.Payloads().LoadString(authority.PayloadSignSecret)
-	u, err := bu.Engine.GrantDownloadURL(bu, objectname, opt)
+	info, err := bu.Engine.GrantDownloadInfo(bu, objectname, opt)
 	if err != nil {
 		if err == bucket.ErrNotFound {
 			http.NotFound(w, r)
@@ -80,7 +80,7 @@ var ActionGrantDownloadURL = action.New(func(w http.ResponseWriter, r *http.Requ
 		}
 		panic(err)
 	}
-	w.Write([]byte(u))
+	render.MustJSON(w, info, 200)
 })
 
 var ActionContent = action.New(func(w http.ResponseWriter, r *http.Request) {

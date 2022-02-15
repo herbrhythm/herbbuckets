@@ -27,19 +27,19 @@ var RouterAPIFactory = router.NewFactory(func() router.Router {
 	var Router = httprouter.New()
 	//Put your router configure code here
 	Router.GET("/current").Handle(bucketsactions.ActionCurrent)
-	Router.StripPrefix("/grantdownloadurl").
+	Router.StripPrefix("/downloadinfo").
 		Use(
 			misc.MethodGET.ServeMiddleware,
 			bucketsmiddlewares.MiddlewarePath,
 			bucketsmiddlewares.MiddlewareAuthViewBucket,
-		).Handle(bucketsactions.ActionGrantDownloadURL)
-	Router.StripPrefix("/grantuploadurl").
+		).Handle(bucketsactions.ActionGrantDownloadInfo)
+	Router.StripPrefix("/uploadinfo").
 		Use(
 			misc.MethodGET.ServeMiddleware,
 			bucketsmiddlewares.MiddlewareBase,
 			bucketsmiddlewares.MiddlewareAuthUploadBucket,
-		).Handle(bucketsactions.ActionGrantUploadURL)
-	Router.StripPrefix("/info").
+		).Handle(bucketsactions.ActionGrantUploadInfo)
+	Router.StripPrefix("/fileinfo").
 		Use(
 			misc.MethodGET.ServeMiddleware,
 			bucketsmiddlewares.MiddlewarePath,
