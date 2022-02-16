@@ -90,19 +90,19 @@ var ActionUpload = action.New(func(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	defer file.Close()
-	sizelimitq := q.Get(bucket.QueryFieldSizelimit)
+	sizelimitq := q.Get(bucket.QueryFieldSizeLimit)
 	if sizelimitq == "" {
 		sizelimitq = "0"
 	}
 	sizelimit, err := strconv.ParseInt(sizelimitq, 10, 64)
 	if err != nil {
-		formerr.AddPlainError(bucket.QueryFieldSizelimit, "Sizelimit format error")
+		formerr.AddPlainError(bucket.QueryFieldSizeLimit, "Sizelimit format error")
 		render.MustJSON(w, formerr.Errors(), 422)
 		return
 	}
-	if bu.Sizelimit > 0 {
-		if sizelimit > bu.Sizelimit {
-			sizelimit = bu.Sizelimit
+	if bu.SizeLimit > 0 {
+		if sizelimit > bu.SizeLimit {
+			sizelimit = bu.SizeLimit
 		}
 	}
 	if sizelimit > 0 {
@@ -156,21 +156,21 @@ var ActionGrantUploadInfo = action.New(func(w http.ResponseWriter, r *http.Reque
 	if lifetime <= 0 {
 		lifetime = bu.Lifetime
 	}
-	sizelimitq := q.Get(bucket.QueryFieldSizelimit)
+	sizelimitq := q.Get(bucket.QueryFieldSizeLimit)
 	if sizelimitq == "" {
 		sizelimitq = "0"
 	}
 	sizelimit, err := strconv.ParseInt(sizelimitq, 10, 64)
 	if err != nil {
-		formerr.AddPlainError(bucket.QueryFieldSizelimit, "Sizelimit format error")
+		formerr.AddPlainError(bucket.QueryFieldSizeLimit, "Sizelimit format error")
 		render.MustJSON(w, formerr.Errors(), 422)
 		return
 	}
 	if sizelimit <= 0 {
-		sizelimit = bu.Sizelimit
+		sizelimit = bu.SizeLimit
 	}
-	if (bu.Sizelimit > 0) && (sizelimit > bu.Sizelimit) {
-		sizelimit = bu.Sizelimit
+	if (bu.SizeLimit > 0) && (sizelimit > bu.SizeLimit) {
+		sizelimit = bu.SizeLimit
 	}
 	sizeq := q.Get(bucket.QueryFieldSize)
 	size, err := strconv.ParseInt(sizeq, 10, 64)
@@ -191,7 +191,7 @@ var ActionGrantUploadInfo = action.New(func(w http.ResponseWriter, r *http.Reque
 	auth := protecter.LoadAuth(r)
 	opt.Appid = auth.Authority().String()
 	opt.Lifetime = lifetime
-	opt.Sizelimit = sizelimit
+	opt.SizeLimit = sizelimit
 	opt.Secret = auth.Payloads().LoadString(authority.PayloadSignSecret)
 	info, err := bu.Engine.GrantUploadInfo(bu, id, object, opt)
 	if err != nil {

@@ -40,7 +40,7 @@ type WebuploadInfo struct {
 	Bucket         string
 	Object         string
 	UploadType     string
-	Sizelimit      int64
+	SizeLimit      int64
 	ExpiredAt      int64
 	PostBody       map[string]string
 	FileField      string
@@ -57,7 +57,7 @@ func NewWebuploadInfo() *WebuploadInfo {
 type Options struct {
 	Appid     string
 	Secret    string
-	Sizelimit int64
+	SizeLimit int64
 	Lifetime  time.Duration
 }
 
@@ -75,7 +75,7 @@ type Bucket struct {
 	Cors       *cors.CORS
 	Referrer   []string
 	BaseURL    string
-	Sizelimit  int64
+	SizeLimit  int64
 	Engine     Engine
 }
 
@@ -94,7 +94,7 @@ func (b *Bucket) InitWith(config *bucketconfig.Config) error {
 	if b.Lifetime <= 0 {
 		b.Lifetime = time.Duration(app.System.LifetimeInSeconds) * time.Second
 	}
-	b.Sizelimit = config.Sizelimit
+	b.SizeLimit = config.SizeLimit
 	b.Cors = &config.Cors
 	b.Referrer = config.Referrer
 	b.BaseURL = config.BaseURL

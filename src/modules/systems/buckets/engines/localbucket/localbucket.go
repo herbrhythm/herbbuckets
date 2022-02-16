@@ -99,13 +99,13 @@ func (b *LocalBucket) newWebuploadInfo() *bucket.WebuploadInfo {
 func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, id string, object string, opt *bucket.Options) (info *bucket.WebuploadInfo, err error) {
 	expired := time.Now().Add(opt.Lifetime).Unix()
 	ts := strconv.FormatInt(expired, 10)
-	sizelimit := strconv.FormatInt(opt.Sizelimit, 10)
+	sizelimit := strconv.FormatInt(opt.SizeLimit, 10)
 	p := urlencodesign.NewParams()
 	p.Append(app.Sign.AppidField, opt.Appid)
 	p.Append(app.Sign.TimestampField, ts)
 	p.Append(app.Sign.BucketField, bu.Name)
 	p.Append(app.Sign.ObjectField, object)
-	p.Append(app.Sign.SizelimitField, sizelimit)
+	p.Append(app.Sign.SizeLimitField, sizelimit)
 	s, err := urlencodesign.Sign(hasher.Md5Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
 	if err != nil {
 		return nil, err
@@ -119,14 +119,14 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, id string, object strin
 	q.Add(app.Sign.SignField, s)
 	q.Add(app.Sign.TimestampField, ts)
 	q.Add(app.Sign.BucketField, bu.Name)
-	q.Add(app.Sign.SizelimitField, sizelimit)
+	q.Add(app.Sign.SizeLimitField, sizelimit)
 	info = b.newWebuploadInfo()
 	info.UploadURL = path.Join(bu.BaseURL+bucket.PrefixUpload, bu.Name, object) + "?" + q.Encode()
 	info.PreviewURL = downloadinfo.URL
 	info.Bucket = bu.Name
 	info.ID = id
 	info.Object = object
-	info.Sizelimit = opt.Sizelimit
+	info.SizeLimit = opt.SizeLimit
 	info.ExpiredAt = expired
 	return info, nil
 }

@@ -1,0 +1,13 @@
+[Unit]
+Description=Herbbuckets
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Restart=on-failure
+RestartSec=5s
+ExecStart=/opt/herbbuckets/bin/herbbuckets
+
+[Install]
+WantedBy=multi-user.target

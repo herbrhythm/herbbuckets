@@ -14,13 +14,13 @@ Addr= "127.0.0.1:4381"
 BaseURL= "https://localhost"
 #ReadTimeoutInSecond is the maximum duration for reading the entire
 #request, including the body.
-#   ReadTimeoutInSecond= 30
+ReadTimeoutInSecond= 7200
 #ReadHeaderTimeoutInSecond is the amount of time allowed to read
 #request headers. 
 #   ReadHeaderTimeoutInSecond=20
 #WriteTimeoutInSecond is the maximum duration before timing out
 #writes of the response.
-#   WriteTimeoutInSecond=30
+WriteTimeoutInSecond=7200
 #IdleTimeoutInSecond is the maximum amount of time to wait for the
 #next request when keep-alives are enabled.
 #   IdleTimeoutInSecond=30

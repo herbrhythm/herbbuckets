@@ -18,7 +18,7 @@ const QueryFieldBucket = "bucket"
 const QueryFieldObject = "object"
 
 const QueryFieldTTL = "ttl"
-const QueryFieldSizelimit = "sizelimit"
+const QueryFieldSizeLimit = "sizelimit"
 const QueryFieldSize = "size"
 const QueryFieldFilename = "filename"
 

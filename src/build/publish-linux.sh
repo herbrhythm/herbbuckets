@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #settings
-binname="app"
+binname="herbbuckets"
 buildername="build-linux.sh"
 
 
