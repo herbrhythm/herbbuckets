@@ -1,6 +1,7 @@
 package localbucket
 
 import (
+	"fmt"
 	"herbbuckets/modules/app"
 	"herbbuckets/modules/bucket"
 	bucketsmiddlewares "herbbuckets/modules/systems/buckets/middlewares"
@@ -8,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -40,6 +40,9 @@ func (c *Config) ApplyTo(bu *bucket.Bucket, b *LocalBucket) error {
 	if b.Location == "" {
 		b.Location = util.AppData(bucket.BucketsFolder, bu.Name)
 	}
+	if bu.BaseURL == nil {
+		return fmt.Errorf("bucket [%s] BaseURL format error", bu.Name)
+	}
 	return nil
 }
 
@@ -63,7 +66,7 @@ func (b *LocalBucket) GrantDownloadInfo(bu *bucket.Bucket, object string, opt *b
 	info = b.newDownloadInfo()
 	if b.Public {
 		info.Permanent = true
-		info.URL = path.Join(bu.BaseURL, bucket.PrefixDownload, bu.Name, object)
+		info.URL = bu.Join(bucket.PrefixDownload, bu.Name, object)
 		return info, nil
 	}
 	p := urlencodesign.NewParams()
@@ -80,7 +83,7 @@ func (b *LocalBucket) GrantDownloadInfo(bu *bucket.Bucket, object string, opt *b
 	q.Add(app.Sign.AppidField, opt.Appid)
 	q.Add(app.Sign.TimestampField, ts)
 	q.Add(app.Sign.SignField, s)
-	info.URL = path.Join(bu.BaseURL, bucket.PrefixDownload, bu.Name, object) + "?" + q.Encode()
+	info.URL = bu.Join(bucket.PrefixDownload, bu.Name, object) + "?" + q.Encode()
 	info.Permanent = false
 	info.ExpiredAt = expired
 	return info, nil
@@ -121,7 +124,7 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, id string, object strin
 	q.Add(app.Sign.BucketField, bu.Name)
 	q.Add(app.Sign.SizeLimitField, sizelimit)
 	info = b.newWebuploadInfo()
-	info.UploadURL = path.Join(bu.BaseURL+bucket.PrefixUpload, bu.Name, object) + "?" + q.Encode()
+	info.UploadURL = bu.Join(bucket.PrefixUpload, bu.Name, object) + "?" + q.Encode()
 	info.PreviewURL = downloadinfo.URL
 	info.Bucket = bu.Name
 	info.ID = id

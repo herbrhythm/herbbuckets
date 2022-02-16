@@ -5,6 +5,8 @@ import (
 	"herbbuckets/modules/app/bucketconfig"
 	"io"
 	"net/http"
+	"net/url"
+	"path"
 	"regexp"
 	"time"
 
@@ -74,7 +76,7 @@ type Bucket struct {
 	Lifetime   time.Duration
 	Cors       *cors.CORS
 	Referrer   []string
-	BaseURL    string
+	BaseURL    *url.URL
 	SizeLimit  int64
 	Engine     Engine
 }
@@ -82,7 +84,13 @@ type Bucket struct {
 func (b *Bucket) Verify() error {
 	return nil
 }
+func (b *Bucket) Join(ele ...string) string {
+	u := *b.BaseURL
+	u.Path = path.Join(u.Path, path.Join(ele...))
+	return u.String()
+}
 func (b *Bucket) InitWith(config *bucketconfig.Config) error {
+	var err error
 	b.Name = config.Name
 	b.Type = config.Type
 	b.Disabled = config.Disabled
@@ -97,9 +105,15 @@ func (b *Bucket) InitWith(config *bucketconfig.Config) error {
 	b.SizeLimit = config.SizeLimit
 	b.Cors = &config.Cors
 	b.Referrer = config.Referrer
-	b.BaseURL = config.BaseURL
-	if b.BaseURL == "" {
-		b.BaseURL = app.HTTP.Config.BaseURL
+	burl := config.BaseURL
+	if burl == "" {
+		burl = app.HTTP.Config.BaseURL
+	}
+	if burl != "" {
+		b.BaseURL, err = url.Parse(burl)
+		if err != nil {
+			return err
+		}
 	}
 	b.Prefix = config.Prefix
 	return b.Verify()
