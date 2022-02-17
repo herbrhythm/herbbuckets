@@ -1,1 +1,14 @@
-#Buckets config file
+# #Buckets config file
+# [[Buckets]]
+# Name="test"
+# Referrer=["*"]
+# [Buckets.CORS]
+# Enabled=true
+# AllowedHeaders=["Content-Type","Access-Control-Allow-Origin"]
+# AllowedMethods=["POST","GET","OPTIONS"]
+# #ExposeHeaders=["header1","header1"]
+# MaxAge="86400"
+# Origins=["*"]
+# AllowCredentials=false
+# [Buckets.Config]
+# Public=true

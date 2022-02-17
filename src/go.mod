@@ -11,7 +11,6 @@ require (
 	github.com/herb-go/events v0.0.0-20201208131041-0345a1e2578a
 	github.com/herb-go/herb v0.0.0-20211208162721-3915598f7a40
 	github.com/herb-go/herb-drivers v0.0.0-20210401170439-32eb00e8f0d5
-	github.com/herb-go/herb-go v0.0.0-20220120123058-d975321e4134
 	github.com/herb-go/herbconfig v0.0.0-20210201131438-44d8e331b703
 	github.com/herb-go/herbmodule-drivers v0.0.0-20211014162935-8125fc21e8d0
 	github.com/herb-go/herbmodules v0.0.0-20211210142600-1d895f274e1a
