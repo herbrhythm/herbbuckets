@@ -9,6 +9,7 @@ require (
 	github.com/herb-go/datasource-drivers v0.0.0-20201011165914-7717acb90545
 	github.com/herb-go/deprecated v0.0.0-20211208162728-2c17daf04a11 // indirect
 	github.com/herb-go/events v0.0.0-20201208131041-0345a1e2578a
+	github.com/herb-go/fetcher v0.0.0-20220216150213-9f82967c6fc0
 	github.com/herb-go/herb v0.0.0-20211208162721-3915598f7a40
 	github.com/herb-go/herb-drivers v0.0.0-20210401170439-32eb00e8f0d5
 	github.com/herb-go/herbconfig v0.0.0-20210201131438-44d8e331b703

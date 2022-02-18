@@ -15,6 +15,8 @@ import (
 type SignConfig struct {
 	DefaultHasher  string
 	AppidField     string
+	IDField        string
+	PathField      string
 	TimestampField string
 	SecretField    string
 	SignField      string

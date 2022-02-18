@@ -37,6 +37,14 @@ var RouterFactory = router.NewFactory(func() router.Router {
 			bucketsmiddlewares.MiddlewareAuthUploadBucket,
 		).
 		Handle(bucketsactions.ActionUpload)
+	Router.POST("/complete").
+		Use(
+			bucketsmiddlewares.MiddlewareQuery,
+			protecters.ProtectMiddleware("complete"),
+			bucketsmiddlewares.MiddlewareWebuploadCORS,
+			bucketsmiddlewares.MiddlewareAuthUploadBucket,
+		).
+		Handle(bucketsactions.ActionComplete)
 
 	//var RouterHTML = newHTMLRouter()
 	//Router.StripPrefix("/page").Use(HTMLMiddlewares()...).Handle(RouterHTML)

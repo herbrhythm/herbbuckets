@@ -66,11 +66,12 @@ func (b *LocalBucket) GrantDownloadInfo(bu *bucket.Bucket, object string, opt *b
 	info = b.newDownloadInfo()
 	if b.Public {
 		info.Permanent = true
-		info.URL = bu.Join(bucket.PrefixDownload, bu.Name, object)
+		info.URL = bu.Join(bucket.PrefixDownload, bu.Name, object).String()
 		return info, nil
 	}
+	u := bu.Join(bucket.PrefixDownload, bu.Name, object)
 	p := urlencodesign.NewParams()
-	p.Append(app.Sign.ObjectField, object)
+	p.Append(app.Sign.PathField, u.Path)
 	p.Append(app.Sign.AppidField, opt.Appid)
 	expired := time.Now().Add(opt.Lifetime).Unix()
 	ts := strconv.FormatInt(expired, 10)
@@ -83,7 +84,8 @@ func (b *LocalBucket) GrantDownloadInfo(bu *bucket.Bucket, object string, opt *b
 	q.Add(app.Sign.AppidField, opt.Appid)
 	q.Add(app.Sign.TimestampField, ts)
 	q.Add(app.Sign.SignField, s)
-	info.URL = bu.Join(bucket.PrefixDownload, bu.Name, object) + "?" + q.Encode()
+
+	info.URL = bu.Join(bucket.PrefixDownload, bu.Name, object).String() + "?" + q.Encode()
 	info.Permanent = false
 	info.ExpiredAt = expired
 	return info, nil
@@ -95,25 +97,22 @@ func (b *LocalBucket) newWebuploadInfo() *bucket.WebuploadInfo {
 	info := bucket.NewWebuploadInfo()
 	info.SuccessCodeMin = 200
 	info.SuccessCodeMax = 299
-	info.Permanent = b.Public
 	info.FileField = bucket.PostFieldFile
 	return info
 }
+
 func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, id string, object string, opt *bucket.Options) (info *bucket.WebuploadInfo, err error) {
-	expired := time.Now().Add(opt.Lifetime).Unix()
+	expired := time.Now().Add(bu.Offset).Unix()
 	ts := strconv.FormatInt(expired, 10)
 	sizelimit := strconv.FormatInt(opt.SizeLimit, 10)
 	p := urlencodesign.NewParams()
+	u := bu.Join(bucket.PrefixUpload, bu.Name, object)
 	p.Append(app.Sign.AppidField, opt.Appid)
 	p.Append(app.Sign.TimestampField, ts)
-	p.Append(app.Sign.BucketField, bu.Name)
+	p.Append(app.Sign.PathField, u.Path)
 	p.Append(app.Sign.ObjectField, object)
 	p.Append(app.Sign.SizeLimitField, sizelimit)
 	s, err := urlencodesign.Sign(hasher.Md5Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
-	if err != nil {
-		return nil, err
-	}
-	downloadinfo, err := b.GrantDownloadInfo(bu, object, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -121,11 +120,14 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, id string, object strin
 	q.Add(app.Sign.AppidField, opt.Appid)
 	q.Add(app.Sign.SignField, s)
 	q.Add(app.Sign.TimestampField, ts)
-	q.Add(app.Sign.BucketField, bu.Name)
 	q.Add(app.Sign.SizeLimitField, sizelimit)
 	info = b.newWebuploadInfo()
-	info.UploadURL = bu.Join(bucket.PrefixUpload, bu.Name, object) + "?" + q.Encode()
-	info.PreviewURL = downloadinfo.URL
+	info.UploadURL = u.String() + "?" + q.Encode()
+	co, err := bu.GrantCompleteOptions(id, object, opt)
+	if err != nil {
+		return nil, err
+	}
+	info.Complete = co.Encode()
 	info.Bucket = bu.Name
 	info.ID = id
 	info.Object = object
@@ -198,6 +200,30 @@ func (b *LocalBucket) ThirdpartyDownload() bool {
 }
 func (b *LocalBucket) BucketType() string {
 	return BucketType
+}
+func (b *LocalBucket) newCompleteInfo() *bucket.CompleteInfo {
+	info := bucket.NewCompleteInfo()
+	return info
+}
+func (b *LocalBucket) Complete(bu *bucket.Bucket, id string, objectname string, opt *bucket.Options) (info *bucket.CompleteInfo, err error) {
+	stat, err := os.Stat(b.localpath(objectname))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, bucket.ErrNotFound
+		}
+		return nil, err
+	}
+	di, err := b.GrantDownloadInfo(bu, objectname, opt)
+	if err != nil {
+		return nil, err
+	}
+	info = b.newCompleteInfo()
+	info.ID = id
+	info.Bucket = bu.Name
+	info.Object = objectname
+	info.Size = stat.Size()
+	info.Preview = di
+	return info, nil
 }
 func (b *LocalBucket) Start() error {
 	return nil

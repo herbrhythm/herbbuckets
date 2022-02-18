@@ -57,6 +57,11 @@ Type="query"
 [Extractors.Config]
 Field="sizelimit"
 
+[[Extractors]]
+Name="idquery"
+Type="query"
+[Extractors.Config]
+Field="id"
 
 [[Extractors]]
 Name="basicuser"
@@ -110,3 +115,7 @@ Extractor="basicpassword"
 [[Fields]]
 Name="sizelimit"
 Extractor="sizelimitquery"
+
+[[Fields]]
+Name="id"
+Extractor="idquery"

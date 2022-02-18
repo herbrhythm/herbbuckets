@@ -16,6 +16,8 @@ github.com/herb-go/deprecated v0.0.0-20211208162728-2c17daf04a11 h1:G/TtzXMPtaV/
 github.com/herb-go/deprecated v0.0.0-20211208162728-2c17daf04a11/go.mod h1:k28Z2bVHWkVqEngFAm0nQAIRdDCXfs+40FN7xYtHt1o=
 github.com/herb-go/events v0.0.0-20201208131041-0345a1e2578a h1:P0FwnBG01w/x+Nb0NbEDMPKCO/X/6+vaJ3MjgYyIqM8=
 github.com/herb-go/events v0.0.0-20201208131041-0345a1e2578a/go.mod h1:ZzP/ImyzQER+p6eBPYOZ0mbpjORKMEUx+R6JX7CPbw8=
+github.com/herb-go/fetcher v0.0.0-20220216150213-9f82967c6fc0 h1:R1juvKbZV0Zc+wOzpgNNv/f29m+q9MAdKrcNtz4JoLI=
+github.com/herb-go/fetcher v0.0.0-20220216150213-9f82967c6fc0/go.mod h1:OaQ31Atp11eU+KOG6Iz0tYL6EzDGoVwNLfzUvOZCPn8=
 github.com/herb-go/herb v0.0.0-20211208162721-3915598f7a40 h1:a9dfJxaycwsElHsHFPtJ5VfMxokPY8UUdCB9EeG14uM=
 github.com/herb-go/herb v0.0.0-20211208162721-3915598f7a40/go.mod h1:epDwnEWl9B23uBEKz8mLk0GuHm04MSp4rnIZev0wiwA=
 github.com/herb-go/herb-drivers v0.0.0-20210401170439-32eb00e8f0d5 h1:bYs8pCWVDu6lIALEQ87v+L3tX/3FVgcug4itUPtoUss=

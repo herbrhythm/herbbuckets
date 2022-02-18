@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"herbbuckets/modules/app"
 	"herbbuckets/modules/bucket"
 	"herbbuckets/modules/pathcleaner"
 	"herbbuckets/modules/uniqueid"
@@ -195,6 +196,27 @@ var ActionGrantUploadInfo = action.New(func(w http.ResponseWriter, r *http.Reque
 	opt.Secret = auth.Payloads().LoadString(authority.PayloadSignSecret)
 	info, err := bu.Engine.GrantUploadInfo(bu, id, object, opt)
 	if err != nil {
+		panic(err)
+	}
+	render.MustJSON(w, info, 200)
+})
+
+var ActionComplete = action.New(func(w http.ResponseWriter, r *http.Request) {
+	objectname := httprouter.GetParams(r).Get(bucket.RouterParamObject)
+	bu := bucket.GetBucketFromRequest(r)
+	auth := protecter.LoadAuth(r)
+	opt := bucket.NewOptions()
+	opt.Appid = auth.Authority().String()
+	opt.Secret = auth.Payloads().LoadString(authority.PayloadSignSecret)
+	opt.Lifetime = bu.Offset
+	q := r.URL.Query()
+	id := q.Get(app.Sign.IDField)
+	info, err := bu.Engine.Complete(bu, id, objectname, opt)
+	if err != nil {
+		if err == bucket.ErrNotFound {
+			http.NotFound(w, r)
+			return
+		}
 		panic(err)
 	}
 	render.MustJSON(w, info, 200)

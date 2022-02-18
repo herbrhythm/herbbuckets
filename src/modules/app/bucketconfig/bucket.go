@@ -10,6 +10,7 @@ type Bucket struct {
 	Disabled          bool
 	DateFormat        string
 	LifetimeInSeconds int64
+	OffsetInSeconds   int64
 	Cors              cors.CORS
 	Referrer          []string
 	SizeLimit         int64

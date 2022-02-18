@@ -14,6 +14,8 @@ const PrefixDownload = "/file"
 
 const PrefixUpload = "/upload"
 
+const PrefixComplete = "/complete"
+
 const QueryFieldBucket = "bucket"
 const QueryFieldObject = "object"
 
@@ -21,6 +23,7 @@ const QueryFieldTTL = "ttl"
 const QueryFieldSizeLimit = "sizelimit"
 const QueryFieldSize = "size"
 const QueryFieldFilename = "filename"
+const QueryFieldID = "id"
 
 const PostFieldFile = "file"
 

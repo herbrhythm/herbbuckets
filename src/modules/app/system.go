@@ -15,6 +15,7 @@ import (
 type SystemConfig struct {
 	DateFormat        string
 	LifetimeInSeconds int64
+	OffsetInSeconds   int64
 }
 
 //System config instance of system.

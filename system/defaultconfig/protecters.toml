@@ -24,12 +24,12 @@ TimeOffsetMaxInSecond=600
 "timestamp"="ts"
 "appid"="appid"
 "secret"="secret"
-"object"="object"
+"path"="path"
 [Protecters.Fields]
 "timestamp"="timestampquery"
 "sign"="signquery"
 "appid"="appidquery"
-"object"="object"
+"path"="path"
 
 [[Protecters]]
 Name="webupload"
@@ -46,11 +46,35 @@ TimeOffsetMaxInSecond=600
 "secret"="secret"
 "object"="object"
 "sizelimit"="sizelimit"
-"bucket"="bucket"
+"path"="path"
 [Protecters.Fields]
 "timestamp"="timestampquery"
 "sign"="signquery"
 "appid"="appidquery"
 "object"="object"
-"bucket"="bucket"
+"path"="path"
 "sizelimit"="sizelimit"
+
+[[Protecters]]
+Name="complete"
+AuthType="hired.TOMLAppKeySigner"
+[Protecters.AuthConfig]
+# Static TOML appkey.
+# Example:https://github.com/herb-go/providers/blob/master/herb/statictoml/tomlappkey/example.toml 
+Source="appdata/appkey.static.toml"
+Hash="md5"
+TimeOffsetMaxInSecond=600
+[Protecters.AuthConfig.Fields]
+"timestamp"="ts"
+"appid"="appid"
+"id"="id"
+"secret"="secret"
+"object"="object"
+"bucket"="bucket"
+[Protecters.Fields]
+"timestamp"="timestampquery"
+"sign"="signquery"
+"object"="object"
+"bucket"="bucket"
+"appid"="appidheader"
+"id"="id"
