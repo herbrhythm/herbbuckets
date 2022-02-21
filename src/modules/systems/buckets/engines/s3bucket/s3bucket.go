@@ -9,28 +9,36 @@ import (
 )
 
 const BucketType = "s3"
-const ForbiddenFilenamePart = "${filename}"
+
+const DefaultFieldAccessKeyID = ""
 
 type Config struct {
 	Public           bool
 	Server           *fetcher.Server
-	FieldAccessKeyId string
+	SecretID         string
+	Secret           string
+	FieldAccessKeyID string
 }
 
 func (c *Config) ApplyTo(bu *bucket.Bucket, b *S3Bucket) error {
-	var err error
 	b.Public = c.Public
-	b.Preset, err = c.Server.CreatePreset()
-	if err != nil {
-		return err
+	b.Server = c.Server
+	b.SecretID = c.SecretID
+	b.Secret = c.Secret
+	b.FieldAccessKeyID = c.FieldAccessKeyID
+	if b.FieldAccessKeyID == "" {
+		b.FieldAccessKeyID = DefaultFieldAccessKeyID
 	}
 	return nil
 }
 
 type S3Bucket struct {
 	Public           bool
-	Preset           *fetcher.Preset
-	FieldAccessKeyId string
+	Server           *fetcher.Server
+	AppID            string
+	SecretID         string
+	Secret           string
+	FieldAccessKeyID string
 }
 
 func (b *S3Bucket) newWebuploadInfo() *bucket.WebuploadInfo {
