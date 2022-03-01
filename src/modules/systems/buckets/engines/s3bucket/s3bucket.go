@@ -15,6 +15,7 @@ const BucketType = "s3"
 
 type Config struct {
 	Public bool
+	Bucket string
 	s3compatible.S3Config
 }
 
@@ -32,11 +33,13 @@ func (c *Config) ApplyTo(bu *bucket.Bucket, b *S3Bucket) error {
 	}
 	b.API = api
 	b.Public = c.Public
+	b.Bucket = c.Bucket
 	return nil
 }
 
 type S3Bucket struct {
 	Public bool
+	Bucket string
 	API    *s3compatible.API
 }
 
@@ -52,7 +55,7 @@ func (b *S3Bucket) GrantUploadInfo(bu *bucket.Bucket, id string, object string, 
 	info = b.newWebuploadInfo()
 	o := s3compatible.NewUploadOptions()
 	expired := time.Now().Add(opt.Lifetime).Unix()
-	url, err := b.API.PresignPutObject(context.TODO(), bu.Name, object, opt.Lifetime, o)
+	url, err := b.API.PresignPutObject(context.TODO(), b.Bucket, object, opt.Lifetime, o)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +78,7 @@ func (b *S3Bucket) newDownloadInfo() *bucket.DownloadInfo {
 }
 func (b *S3Bucket) GrantDownloadInfo(bu *bucket.Bucket, object string, opt *bucket.Options) (info *bucket.DownloadInfo, err error) {
 	info = b.newDownloadInfo()
-	surl, err := b.API.PresignGetObject(context.TODO(), bu.Name, object, opt.Lifetime)
+	surl, err := b.API.PresignGetObject(context.TODO(), b.Bucket, object, opt.Lifetime)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +89,7 @@ func (b *S3Bucket) GrantDownloadInfo(bu *bucket.Bucket, object string, opt *buck
 			return nil, err
 		}
 		u.RawQuery = ""
-		info.URL = u.RequestURI()
+		info.URL = u.String()
 	} else {
 		info.ExpiredAt = time.Now().Add(opt.Lifetime).Unix()
 		info.URL = surl
@@ -97,18 +100,18 @@ func (b *S3Bucket) Permanent() bool {
 	return b.Public
 }
 func (b *S3Bucket) Download(bu *bucket.Bucket, objectname string, w io.Writer) (err error) {
-	_, err = b.API.Load(context.TODO(), bu.Name, objectname, w)
+	_, err = b.API.Load(context.TODO(), b.Bucket, objectname, w)
 	return b.ConvertError(err)
 }
 func (b *S3Bucket) Upload(bu *bucket.Bucket, objectname string, body io.Reader) (err error) {
-	err = b.API.Save(context.TODO(), bu.Name, objectname, body)
+	err = b.API.Save(context.TODO(), b.Bucket, objectname, body)
 	return b.ConvertError(err)
 }
 func (b *S3Bucket) ServeHTTPDownload(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 func (b *S3Bucket) GetFileinfo(bu *bucket.Bucket, objectname string) (info *bucket.Fileinfo, err error) {
-	result, err := b.API.Info(context.TODO(), bu.Name, objectname)
+	result, err := b.API.Info(context.TODO(), b.Bucket, objectname)
 	if err != nil {
 		return nil, b.ConvertError(err)
 	}
@@ -118,7 +121,7 @@ func (b *S3Bucket) GetFileinfo(bu *bucket.Bucket, objectname string) (info *buck
 	return info, nil
 }
 func (b *S3Bucket) RemoveFile(bu *bucket.Bucket, objectname string) error {
-	return b.ConvertError(b.API.Remove(context.TODO(), bu.Name, objectname))
+	return b.ConvertError(b.API.Remove(context.TODO(), b.Bucket, objectname))
 }
 func (b *S3Bucket) newCompleteInfo() *bucket.CompleteInfo {
 	info := bucket.NewCompleteInfo()
