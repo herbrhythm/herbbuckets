@@ -135,27 +135,41 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, id string, object strin
 	info.ExpiredAt = expired
 	return info, nil
 }
-func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string) (r io.ReadCloser, err error) {
+func (b *LocalBucket) Download(bu *bucket.Bucket, objectname string, w io.Writer) (err error) {
 	f, err := os.Open(b.localpath(objectname))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, bucket.ErrNotFound
+			return bucket.ErrNotFound
 		}
 	}
-	return f, nil
+	defer f.Close()
+	_, err = io.Copy(w, f)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return bucket.ErrNotFound
+		}
+		return err
+	}
+	return nil
 }
-func (b *LocalBucket) Upload(bu *bucket.Bucket, objectname string) (w io.WriteCloser, err error) {
+func (b *LocalBucket) Upload(bu *bucket.Bucket, objectname string, body io.Reader) (err error) {
 	lp := b.localpath(objectname)
 	folder := filepath.Dir(lp)
 	_, err = os.Stat(folder)
 	if err == nil {
-		return nil, bucket.ErrExists
+		return bucket.ErrExists
 	}
 	if !os.IsNotExist(err) {
-		return nil, err
+		return err
 	}
 	os.MkdirAll(folder, util.DefaultFolderMode)
-	return os.Create(lp)
+	file, err := os.Create(lp)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	_, err = io.Copy(file, body)
+	return err
 }
 func (b *LocalBucket) serveHTTPDownload(w http.ResponseWriter, r *http.Request) {
 	objectname := httprouter.GetParams(r).Get(bucket.RouterParamObject)

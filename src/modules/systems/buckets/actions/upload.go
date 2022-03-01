@@ -5,7 +5,6 @@ import (
 	"herbbuckets/modules/bucket"
 	"herbbuckets/modules/pathcleaner"
 	"herbbuckets/modules/uniqueid"
-	"io"
 	"net/http"
 	"path"
 	"strconv"
@@ -52,17 +51,12 @@ var ActionSave = action.New(func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	objectname := pathcleaner.CreateObjectID(bu, id, filename)
-	writer, err := bu.Engine.Upload(bu, objectname)
+	err = bu.Engine.Upload(bu, objectname, file)
 	if err != nil {
 		if err == bucket.ErrExists {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
-		panic(err)
-	}
-	defer writer.Close()
-	_, err = io.Copy(writer, file)
-	if err != nil {
 		panic(err)
 	}
 	result := SaveResult{
@@ -113,17 +107,12 @@ var ActionUpload = action.New(func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writer, err := bu.Engine.Upload(bu, objectname)
+	err = bu.Engine.Upload(bu, objectname, file)
 	if err != nil {
 		if err == bucket.ErrExists {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
-		panic(err)
-	}
-	defer writer.Close()
-	_, err = io.Copy(writer, file)
-	if err != nil {
 		panic(err)
 	}
 	render.MustJSON(w, "success", 200)

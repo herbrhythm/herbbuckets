@@ -1,83 +1,145 @@
 package s3bucket
 
 import (
+	"context"
 	"herbbuckets/modules/bucket"
 	"io"
 	"net/http"
+	"net/url"
+	"time"
 
-	"github.com/herb-go/fetcher"
+	"github.com/herb-go/providers/s3compatible"
 )
 
 const BucketType = "s3"
 
-const DefaultFieldAccessKeyID = ""
-
 type Config struct {
-	Public           bool
-	Server           *fetcher.Server
-	SecretID         string
-	Secret           string
-	FieldAccessKeyID string
+	Public bool
+	s3compatible.S3Config
 }
 
-func (c *Config) ApplyTo(bu *bucket.Bucket, b *S3Bucket) error {
-	b.Public = c.Public
-	b.Server = c.Server
-	b.SecretID = c.SecretID
-	b.Secret = c.Secret
-	b.FieldAccessKeyID = c.FieldAccessKeyID
-	if b.FieldAccessKeyID == "" {
-		b.FieldAccessKeyID = DefaultFieldAccessKeyID
+func (b *S3Bucket) ConvertError(err error) error {
+	if s3compatible.IsHTTPError(err, 404) {
+		return bucket.ErrNotFound
 	}
+	return err
+}
+func (c *Config) ApplyTo(bu *bucket.Bucket, b *S3Bucket) error {
+	api := s3compatible.New()
+	err := c.S3Config.ApplyTo(api)
+	if err != nil {
+		return err
+	}
+	b.API = api
+	b.Public = c.Public
 	return nil
 }
 
 type S3Bucket struct {
-	Public           bool
-	Server           *fetcher.Server
-	AppID            string
-	SecretID         string
-	Secret           string
-	FieldAccessKeyID string
+	Public bool
+	API    *s3compatible.API
 }
 
 func (b *S3Bucket) newWebuploadInfo() *bucket.WebuploadInfo {
 	info := bucket.NewWebuploadInfo()
 	info.SuccessCodeMin = 200
 	info.SuccessCodeMax = 299
-	info.FileField = bucket.PostFieldFile
+	info.FileField = ""
+	info.UploadType = "put"
 	return info
 }
 func (b *S3Bucket) GrantUploadInfo(bu *bucket.Bucket, id string, object string, opt *bucket.Options) (info *bucket.WebuploadInfo, err error) {
-	return nil, nil
+	info = b.newWebuploadInfo()
+	o := s3compatible.NewUploadOptions()
+	expired := time.Now().Add(opt.Lifetime).Unix()
+	url, err := b.API.PresignPutObject(context.TODO(), bu.Name, object, opt.Lifetime, o)
+	if err != nil {
+		return nil, err
+	}
+	info.UploadURL = url
+	co, err := bu.GrantCompleteOptions(id, object, opt)
+	if err != nil {
+		return nil, err
+	}
+	info.Complete = co.Encode()
+	info.Bucket = bu.Name
+	info.ID = id
+	info.Object = object
+	info.SizeLimit = opt.SizeLimit
+	info.ExpiredAt = expired
+	return info, nil
 }
 func (b *S3Bucket) newDownloadInfo() *bucket.DownloadInfo {
 	info := bucket.NewDownloadInfo()
 	return info
 }
 func (b *S3Bucket) GrantDownloadInfo(bu *bucket.Bucket, object string, opt *bucket.Options) (info *bucket.DownloadInfo, err error) {
-	return nil, nil
+	info = b.newDownloadInfo()
+	surl, err := b.API.PresignGetObject(context.TODO(), bu.Name, object, opt.Lifetime)
+	if err != nil {
+		return nil, err
+	}
+	info.Permanent = b.Public
+	if b.Public {
+		u, err := url.Parse(surl)
+		if err != nil {
+			return nil, err
+		}
+		u.RawQuery = ""
+		info.URL = u.RequestURI()
+	} else {
+		info.ExpiredAt = time.Now().Add(opt.Lifetime).Unix()
+		info.URL = surl
+	}
+	return info, nil
 }
 func (b *S3Bucket) Permanent() bool {
 	return b.Public
 }
-func (b *S3Bucket) Download(bu *bucket.Bucket, objectname string) (r io.ReadCloser, err error) {
-	return nil, nil
+func (b *S3Bucket) Download(bu *bucket.Bucket, objectname string, w io.Writer) (err error) {
+	_, err = b.API.Load(context.TODO(), bu.Name, objectname, w)
+	return b.ConvertError(err)
 }
-func (b *S3Bucket) Upload(bu *bucket.Bucket, objectname string) (w io.WriteCloser, err error) {
-	return nil, nil
+func (b *S3Bucket) Upload(bu *bucket.Bucket, objectname string, body io.Reader) (err error) {
+	err = b.API.Save(context.TODO(), bu.Name, objectname, body)
+	return b.ConvertError(err)
 }
 func (b *S3Bucket) ServeHTTPDownload(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 func (b *S3Bucket) GetFileinfo(bu *bucket.Bucket, objectname string) (info *bucket.Fileinfo, err error) {
-	return nil, nil
+	result, err := b.API.Info(context.TODO(), bu.Name, objectname)
+	if err != nil {
+		return nil, b.ConvertError(err)
+	}
+	info = bucket.NewFileinfo()
+	info.Modtime = result.LastModified.Unix()
+	info.Size = result.Size
+	return info, nil
 }
 func (b *S3Bucket) RemoveFile(bu *bucket.Bucket, objectname string) error {
-	return nil
+	return b.ConvertError(b.API.Remove(context.TODO(), bu.Name, objectname))
+}
+func (b *S3Bucket) newCompleteInfo() *bucket.CompleteInfo {
+	info := bucket.NewCompleteInfo()
+	return info
 }
 func (b *S3Bucket) Complete(bu *bucket.Bucket, id string, objectname string, opt *bucket.Options) (info *bucket.CompleteInfo, err error) {
-	return nil, nil
+	fi, err := b.GetFileinfo(bu, objectname)
+	if err != nil {
+		return nil, err
+	}
+	di, err := b.GrantDownloadInfo(bu, objectname, opt)
+	if err != nil {
+		return nil, err
+	}
+	info = b.newCompleteInfo()
+	info.ID = id
+	info.Bucket = bu.Name
+	info.Object = objectname
+	info.Size = fi.Size
+	info.Preview = di
+	return info, nil
 }
 func (b *S3Bucket) ThirdpartyUpload() bool {
 	return true

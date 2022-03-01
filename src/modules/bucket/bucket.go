@@ -111,8 +111,8 @@ type Engine interface {
 	ThirdpartyDownload() bool
 	BucketType() string
 	ServeHTTPDownload(w http.ResponseWriter, r *http.Request)
-	Download(b *Bucket, objectname string) (r io.ReadCloser, err error)
-	Upload(b *Bucket, objectname string) (w io.WriteCloser, err error)
+	Download(b *Bucket, objectname string, w io.Writer) (err error)
+	Upload(b *Bucket, objectname string, body io.Reader) (err error)
 	GetFileinfo(b *Bucket, objectname string) (info *Fileinfo, err error)
 	Start() error
 	Stop() error

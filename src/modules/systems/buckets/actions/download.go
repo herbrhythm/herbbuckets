@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"bytes"
 	"herbbuckets/modules/bucket"
 	"io"
 	"net/http"
@@ -86,7 +87,8 @@ var ActionGrantDownloadInfo = action.New(func(w http.ResponseWriter, r *http.Req
 var ActionContent = action.New(func(w http.ResponseWriter, r *http.Request) {
 	bu := bucket.GetBucketFromRequest(r)
 	objectname := httprouter.GetParams(r).Get(bucket.RouterParamObject)
-	re, err := bu.Engine.Download(bu, objectname)
+	buf := bytes.NewBuffer(nil)
+	err := bu.Engine.Download(bu, objectname, buf)
 	if err != nil {
 		if err == bucket.ErrNotFound {
 			http.NotFound(w, r)
@@ -94,9 +96,8 @@ var ActionContent = action.New(func(w http.ResponseWriter, r *http.Request) {
 		}
 		panic(err)
 	}
-	defer re.Close()
 	w.WriteHeader(200)
-	_, err = io.Copy(w, re)
+	_, err = io.Copy(w, buf)
 	if err != nil {
 		panic(err)
 	}
