@@ -28,13 +28,11 @@ const ExtentionsSeparator = ","
 
 type Config struct {
 	Public   bool
-	Hasher   string
 	Location string
 }
 
 func (c *Config) ApplyTo(bu *bucket.Bucket, b *LocalBucket) error {
 	b.Public = c.Public
-	b.Hasher = c.Hasher
 	b.Cors = bu.Cors
 	b.Location = c.Location
 	if b.Location == "" {
@@ -47,11 +45,9 @@ func (c *Config) ApplyTo(bu *bucket.Bucket, b *LocalBucket) error {
 }
 
 type LocalBucket struct {
-	Public    bool
-	Location  string
-	Hasher    string
-	Temporary bool
-	Cors      *cors.CORS
+	Public   bool
+	Location string
+	Cors     *cors.CORS
 }
 
 func (b *LocalBucket) localpath(object string) string {
@@ -76,7 +72,7 @@ func (b *LocalBucket) GrantDownloadInfo(bu *bucket.Bucket, object string, opt *b
 	expired := time.Now().Add(opt.Lifetime).Unix()
 	ts := strconv.FormatInt(expired, 10)
 	p.Append(app.Sign.TimestampField, ts)
-	s, err := urlencodesign.Sign(hasher.Md5Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
+	s, err := urlencodesign.Sign(hasher.Sha256Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +93,7 @@ func (b *LocalBucket) newWebuploadInfo() *bucket.WebuploadInfo {
 	info := bucket.NewWebuploadInfo()
 	info.SuccessCodeMin = 200
 	info.SuccessCodeMax = 299
-	info.FileField = bucket.PostFieldFile
+	info.UploadType = bucket.UploadTypePost
 	return info
 }
 
@@ -112,7 +108,7 @@ func (b *LocalBucket) GrantUploadInfo(bu *bucket.Bucket, id string, object strin
 	p.Append(app.Sign.PathField, u.Path)
 	p.Append(app.Sign.ObjectField, object)
 	p.Append(app.Sign.SizeLimitField, sizelimit)
-	s, err := urlencodesign.Sign(hasher.Md5Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
+	s, err := urlencodesign.Sign(hasher.Sha256Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
 	if err != nil {
 		return nil, err
 	}

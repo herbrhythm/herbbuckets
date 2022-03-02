@@ -48,12 +48,13 @@ func (b *S3Bucket) newWebuploadInfo() *bucket.WebuploadInfo {
 	info.SuccessCodeMin = 200
 	info.SuccessCodeMax = 299
 	info.FileField = ""
-	info.UploadType = "put"
+	info.UploadType = bucket.UploadTypePut
 	return info
 }
 func (b *S3Bucket) GrantUploadInfo(bu *bucket.Bucket, id string, object string, opt *bucket.Options) (info *bucket.WebuploadInfo, err error) {
 	info = b.newWebuploadInfo()
 	o := s3compatible.NewUploadOptions()
+	o.ContentLength = opt.SizeLimit
 	expired := time.Now().Add(opt.Lifetime).Unix()
 	url, err := b.API.PresignPutObject(context.TODO(), b.Bucket, object, opt.Lifetime, o)
 	if err != nil {

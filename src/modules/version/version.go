@@ -8,8 +8,8 @@ import (
 
 const Major = 0
 const Year = 2022
-const Month = 2
-const Day = 16
+const Month = 3
+const Day = 1
 const Patch = 0
 const Build = ""
 

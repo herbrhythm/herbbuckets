@@ -5,6 +5,7 @@ import (
 	"herbbuckets/modules/bucket"
 	"herbbuckets/modules/pathcleaner"
 	"herbbuckets/modules/uniqueid"
+	"io"
 	"net/http"
 	"path"
 	"strconv"
@@ -25,19 +26,10 @@ type SaveResult struct {
 }
 
 var ActionSave = action.New(func(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	formerr := &validator.Validator{}
 	bu := bucket.GetBucketFromRequest(r)
 	q := r.URL.Query()
-	file, _, err := r.FormFile(bucket.PostFieldFile)
-	if err != nil {
-		if err == http.ErrMissingFile || err == http.ErrNotMultipart {
-			formerr.AddPlainError(bucket.PostFieldFile, "File required")
-			render.MustJSON(w, formerr.Errors(), 422)
-			return
-		}
-		panic(err)
-	}
-	defer file.Close()
 	id := uniqueid.MustGenerateID()
 	filename := q.Get(bucket.QueryFieldFilename)
 	if filename == "" {
@@ -51,7 +43,7 @@ var ActionSave = action.New(func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	objectname := pathcleaner.CreateObjectID(bu, id, filename)
-	err = bu.Engine.Upload(bu, objectname, file)
+	err := bu.Engine.Upload(bu, objectname, r.Body)
 	if err != nil {
 		if err == bucket.ErrExists {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -67,6 +59,7 @@ var ActionSave = action.New(func(w http.ResponseWriter, r *http.Request) {
 	render.MustJSON(w, result, 200)
 })
 var ActionUpload = action.New(func(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	formerr := &validator.Validator{}
 	bu := bucket.GetBucketFromRequest(r)
 	if bu == nil || bu.Engine.ThirdpartyUpload() {
@@ -75,16 +68,6 @@ var ActionUpload = action.New(func(w http.ResponseWriter, r *http.Request) {
 	}
 	q := r.URL.Query()
 	objectname := httprouter.GetParams(r).Get(bucket.RouterParamObject)
-	file, h, err := r.FormFile(bucket.PostFieldFile)
-	if err != nil {
-		if err == http.ErrMissingFile || err == http.ErrNotMultipart {
-			formerr.AddPlainError(bucket.PostFieldFile, "File required")
-			render.MustJSON(w, formerr.Errors(), 422)
-			return
-		}
-		panic(err)
-	}
-	defer file.Close()
 	sizelimitq := q.Get(bucket.QueryFieldSizeLimit)
 	if sizelimitq == "" {
 		sizelimitq = "0"
@@ -100,14 +83,11 @@ var ActionUpload = action.New(func(w http.ResponseWriter, r *http.Request) {
 			sizelimit = bu.SizeLimit
 		}
 	}
+	var reader io.Reader = r.Body
 	if sizelimit > 0 {
-		if h.Size > sizelimit {
-			formerr.AddPlainError(bucket.PostFieldFile, "File too large")
-			render.MustJSON(w, formerr.Errors(), 422)
-			return
-		}
+		reader = io.LimitReader(reader, sizelimit)
 	}
-	err = bu.Engine.Upload(bu, objectname, file)
+	err = bu.Engine.Upload(bu, objectname, reader)
 	if err != nil {
 		if err == bucket.ErrExists {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)

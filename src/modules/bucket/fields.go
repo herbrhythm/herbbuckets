@@ -30,6 +30,10 @@ const PostFieldFile = "file"
 const RouterParamBucket = "bucket"
 const RouterParamObject = "object"
 
+const UploadTypePut = "put"
+const UploadTypePost = "post"
+const UploadTypeForm = "form"
+
 type ContextKey string
 
 const ContextKeyBucket = ContextKey("bucket")

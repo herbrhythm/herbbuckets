@@ -1,7 +1,13 @@
 # #Buckets config file
 # [[Buckets]]
-# Name="test"
+# Name="LOCAL"
 # Referrer=["*"]
+# Disabled=false
+# DateFormat=""
+# LifetimeInSeconds=0
+# OffsetInSeconds=0
+# BaseURL=""
+# Prefix=""
 # [Buckets.CORS]
 # Enabled=true
 # AllowedHeaders=["Content-Type","Access-Control-Allow-Origin"]
@@ -12,3 +18,30 @@
 # AllowCredentials=false
 # [Buckets.Config]
 # Public=true
+# Location=""
+
+# [[Buckets]]
+# Name="S3"
+# Referrer=["*"]
+# Type="s3"
+# Disabled=false
+# DateFormat=""
+# LifetimeInSeconds=0
+# OffsetInSeconds=0
+# BaseURL=""
+# Prefix=""
+# [Buckets.CORS]
+# Enabled=true
+# AllowedHeaders=["Content-Type","Access-Control-Allow-Origin"]
+# AllowedMethods=["POST","GET","OPTIONS"]
+# #ExposeHeaders=["header1","header1"]
+# MaxAge="86400"
+# Origins=["*"]
+# AllowCredentials=false
+# [Buckets.Config]
+# Public=true
+# Bucket="BUCKETNAME"
+# Endpoint= "https://SERVER.com"
+# Region=   "auto"
+# SecretID= "SECRETID"
+# Secret=   "SECRET"

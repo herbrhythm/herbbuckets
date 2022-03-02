@@ -44,7 +44,7 @@ func (b *Bucket) GrantCompleteOptions(id string, object string, opt *Options) (*
 	p.Append(app.Sign.ObjectField, object)
 	p.Append(app.Sign.IDField, id)
 	p.Append(app.Sign.TimestampField, ts)
-	s, err := urlencodesign.Sign(hasher.Md5Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
+	s, err := urlencodesign.Sign(hasher.Sha256Hasher, secret.Secret(opt.Secret), app.Sign.SecretField, p, true)
 	if err != nil {
 		return nil, err
 	}
